@@ -1,0 +1,1839 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<title>Passly — Gestor de Cobros y Cuentas</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg: #000000;
+  --surface: #0a0a0a;
+  --surface-c: #121212;
+  --surface-high: #1a1a1a;
+  --surface-highest: #242424;
+  --line: #222222;
+  --line-subtle: #171717;
+  --tx: #f8fafc;
+  --mu: #8e8e93;
+  --primary: #38bdf8;
+  --primary-hover: #0ea5e9;
+  --primary-container: #082f49;
+  --on-primary: #000000;
+  --on-primary-container: #bae6fd;
+  --ok: #34d399;
+  --ok-bg: #064e3b;
+  --bad: #f87171;
+  --bad-bg: #450a0a;
+  --warn: #fbbf24;
+  --warn-bg: #451a03;
+  color-scheme: dark;
+  box-sizing: border-box;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{background:var(--bg);scroll-padding-top:env(safe-area-inset-top,0px)}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--tx);
+  font:15px/1.45 'Plus Jakarta Sans',system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  padding-bottom:calc(96px + env(safe-area-inset-bottom,0px));
+}
+main{max-width:580px;margin:0 auto;padding:16px 16px 24px}
+h1{font-size:26px;font-weight:800;letter-spacing:-.5px;margin:8px 0 4px;color:#fff}
+h2{font-size:19px;font-weight:700;letter-spacing:-.3px;margin:24px 0 12px;color:#fff}
+p{margin:0;color:var(--mu);font-size:14px}
+.banner-alert{
+  background:var(--bad-bg);
+  border:1px solid var(--bad);
+  color:#fecaca;
+  padding:12px 16px;
+  border-radius:18px;
+  font-size:13px;
+  font-weight:600;
+  margin-bottom:16px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.top-actions{display:flex;gap:10px;margin:18px 0 20px}
+.btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  border:0;
+  border-radius:9999px;
+  padding:13px 20px;
+  font:600 14px 'Plus Jakarta Sans',sans-serif;
+  background:var(--primary);
+  color:var(--on-primary);
+  cursor:pointer;
+  transition:all .15s ease;
+}
+.btn:active{transform:scale(0.97);opacity:.9}
+.btn.g{background:var(--surface-high);color:var(--tx);border:1px solid var(--line)}
+.btn.d{background:var(--bad-bg);color:var(--bad);border:1px solid #7f1d1d}
+.btn.w{background:#25d366;color:#032912}
+.btn.subtle{background:transparent;border:1px solid var(--line);color:var(--mu);padding:8px 14px;border-radius:9999px;font-size:13px}
+.btn.subtle.d{border-color:#7f1d1d;color:var(--bad)}
+.strip{
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  background:var(--surface-c);
+  border:1px solid var(--line-subtle);
+  border-radius:24px;
+  padding:16px 8px;
+  margin-bottom:20px;
+}
+.strip div{text-align:center;border-right:1px solid var(--line-subtle);padding:0 4px}
+.strip div:last-child{border:0}
+.strip b{display:block;font-size:18px;font-weight:800;font-variant-numeric:tabular-nums;color:#fff}
+.strip small{color:var(--mu);font-size:12px;font-weight:600}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:24px;
+  padding:16px;
+  margin-bottom:16px;
+  position:relative;
+}
+.card-header{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+.card-header .grow b{font-size:17px;font-weight:700}
+.subtabs{
+  display:flex;
+  gap:6px;
+  background:var(--surface-c);
+  padding:4px;
+  border-radius:16px;
+  margin:12px 0 14px;
+  border:1px solid var(--line-subtle);
+}
+.subtab{
+  flex:1;
+  border:0;
+  background:transparent;
+  color:var(--mu);
+  font:600 12px 'Plus Jakarta Sans',sans-serif;
+  padding:8px 4px;
+  border-radius:12px;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:5px;
+  transition:all .15s ease;
+}
+.subtab.on{
+  background:var(--surface-high);
+  color:var(--primary);
+  border:1px solid var(--line);
+}
+.row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  background:var(--surface-c);
+  border:1px solid var(--line-subtle);
+  border-radius:18px;
+  padding:12px;
+  margin-bottom:8px;
+}
+.row.paused{opacity:.65;border-style:dashed}
+.grow{flex:1;min-width:0;cursor:pointer}
+.grow b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:15px}
+.grow small{color:var(--mu);font-size:13px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:2px}
+.chip{
+  font-size:11px;
+  font-weight:700;
+  padding:4px 10px;
+  border-radius:9999px;
+  background:var(--surface-high);
+  color:var(--mu);
+  white-space:nowrap;
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+}
+.chip.ok{background:var(--ok-bg);color:var(--ok)}
+.chip.bad{background:var(--bad-bg);color:var(--bad)}
+.chip.warn{background:var(--warn-bg);color:var(--warn)}
+.mini{
+  border:1px solid var(--line);
+  background:var(--surface-high);
+  color:var(--tx);
+  border-radius:9999px;
+  padding:7px 12px;
+  font:600 12px 'Plus Jakarta Sans',sans-serif;
+  cursor:pointer;
+  white-space:nowrap;
+}
+.mini:active{transform:scale(0.96)}
+.mini.d{border-color:#7f1d1d;color:var(--bad);background:var(--bad-bg)}
+.mini.ok{border-color:var(--ok);color:var(--ok);background:var(--ok-bg)}
+.mini.primary{border-color:var(--primary);color:var(--on-primary);background:var(--primary)}
+.add{
+  width:100%;
+  border:1px dashed var(--line);
+  background:var(--surface-c);
+  color:var(--primary);
+  border-radius:16px;
+  padding:12px;
+  font:600 13px 'Plus Jakarta Sans',sans-serif;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  margin-top:6px;
+}
+.empty{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:24px;
+  padding:32px 20px;
+  text-align:center;
+}
+.empty p{margin-bottom:16px}
+nav{
+  position:fixed;
+  left:0;
+  right:0;
+  bottom:0;
+  display:flex;
+  background:rgba(10,10,10,0.94);
+  backdrop-filter:blur(16px);
+  -webkit-backdrop-filter:blur(16px);
+  border-top:1px solid var(--line);
+  padding:8px 12px calc(8px + env(safe-area-inset-bottom,0px));
+  z-index:30;
+}
+.nav-btn{
+  flex:1;
+  border:0;
+  background:transparent;
+  color:var(--mu);
+  font:600 11px 'Plus Jakarta Sans',sans-serif;
+  padding:4px 0;
+  cursor:pointer;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:4px;
+}
+.nav-pill{
+  width:56px;
+  height:30px;
+  border-radius:9999px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  transition:all .2s ease;
+}
+.nav-pill .icon{font-size:20px}
+.nav-btn.on{color:var(--tx)}
+.nav-btn.on .nav-pill{background:var(--primary-container);color:var(--primary)}
+#sheet{position:fixed;inset:0;display:none;z-index:50}
+#sheet.on{display:block}
+.bk{position:absolute;inset:0;background:rgba(0,0,0,0.85);backdrop-filter:blur(4px)}
+.pan{
+  position:absolute;
+  left:0;
+  right:0;
+  bottom:0;
+  margin:auto;
+  max-width:580px;
+  max-height:90%;
+  overflow-y:auto;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:28px 28px 0 0;
+  padding:24px 20px calc(24px + env(safe-area-inset-bottom,0px));
+}
+label{display:block;color:var(--mu);font-size:13px;font-weight:600;margin:14px 0 6px}
+input,textarea,select{
+  width:100%;
+  background:var(--surface-c);
+  color:var(--tx);
+  border:1px solid var(--line);
+  border-radius:16px;
+  padding:13px 14px;
+  font:15px 'Plus Jakarta Sans',sans-serif;
+  outline:none;
+  transition:border-color .15s;
+}
+input:focus,textarea:focus,select:focus{border-color:var(--primary)}
+textarea{height:130px;font:12px ui-monospace,monospace}
+.acts{display:flex;gap:10px;margin-top:20px}
+.acts .btn{flex:1}
+.vault{
+  background:var(--surface-c);
+  border:1px solid var(--line-subtle);
+  border-radius:18px;
+  padding:12px;
+  margin:0 0 12px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  font-size:13px;
+}
+.vr{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.vr code{font-family:ui-monospace,monospace;color:var(--primary);font-size:14px}
+.lg{
+  width:44px;
+  height:44px;
+  border-radius:14px;
+  display:grid;
+  place-items:center;
+  font:700 15px 'Plus Jakarta Sans',sans-serif;
+  color:#fff;
+  flex:none;
+  object-fit:cover;
+}
+.lg.sm{width:34px;height:34px;border-radius:10px;font-size:13px}
+.plat{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.pb{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  background:var(--surface-c);
+  border:1px solid var(--line);
+  color:var(--tx);
+  border-radius:14px;
+  padding:8px 10px;
+  font:600 13px 'Plus Jakarta Sans',sans-serif;
+  cursor:pointer;
+  text-align:left;
+}
+.pb.on{border-color:var(--primary);background:var(--primary-container);color:#fff}
+.toast{
+  position:fixed;
+  left:50%;
+  transform:translateX(-50%);
+  bottom:98px;
+  background:var(--surface-highest);
+  color:#fff;
+  border:1px solid var(--line);
+  padding:10px 18px;
+  border-radius:9999px;
+  z-index:90;
+  font-size:13px;
+  font-weight:600;
+  box-shadow:0 10px 30px rgba(0,0,0,0.6);
+}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.chk{display:flex;align-items:center;gap:10px;font-size:14px;margin-top:14px;cursor:pointer}
+.chk input{width:auto}
+.tkc{
+  background:var(--surface-c);
+  border:1px solid var(--line);
+  border-radius:22px;
+  padding:8px 16px;
+  margin:14px 0 8px;
+}
+.tr{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--line-subtle)}
+.tr:last-child{border:0}
+.ta{text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:3px}
+.tt{display:flex;justify-content:space-between;align-items:center;padding:10px 0}
+.tt span{color:var(--mu);font-size:14px}
+.tt b{font-size:18px;font-variant-numeric:tabular-nums;color:#fff}
+.icon{font-family:'Material Symbols Rounded',sans-serif;font-style:normal;vertical-align:middle;line-height:1}
+</style>
+</head>
+<body>
+<div id="storageAlert"></div>
+<main id="app"></main>
+<nav>
+<button class="nav-btn" id="n1" onclick="go('home')"><div class="nav-pill"><i class="icon">home</i></div><span>Inicio</span></button>
+<button class="nav-btn" id="n2" onclick="go('accts')"><div class="nav-pill"><i class="icon">dataset</i></div><span>Cuentas</span></button>
+<button class="nav-btn" id="n3" onclick="go('clients')"><div class="nav-pill"><i class="icon">group</i></div><span>Clientes</span></button>
+<button class="nav-btn" id="n4" onclick="go('sets')"><div class="nav-pill"><i class="icon">settings</i></div><span>Ajustes</span></button>
+</nav>
+<div id="sheet"></div>
+
+<script>
+var KEY = 'subs-v1', S = { accounts: [], settings: {}, lastBackup: null }, view = 'home';
+var ACC_EXP = {}, ACC_TAB = {};
+
+if (navigator.storage && navigator.storage.persist) {
+  navigator.storage.persist().catch(function(){});
+}
+
+function testStorage() {
+  try {
+    localStorage.setItem('__ptest', '1');
+    localStorage.removeItem('__ptest');
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+if (!testStorage()) {
+  document.getElementById('storageAlert').innerHTML = '<div class="banner-alert" style="margin:12px 16px 0"><i class="icon">error</i> Tus datos no se están guardando en este navegador. Desactiva modo incógnito.</div>';
+}
+
+try {
+  var raw = localStorage.getItem(KEY);
+  if (raw) S = JSON.parse(raw);
+} catch (e) {}
+
+function save() {
+  try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {}
+}
+
+var $ = function(s){ return document.querySelector(s); };
+function uid(){ return Math.random().toString(36).slice(2,9); }
+function esc(s){ return String(s||'').replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+function money(n){ return '$' + (+n||0).toLocaleString('es-MX', { maximumFractionDigits: 2 }); }
+function today(){ var d = new Date(); d.setHours(0,0,0,0); return d; }
+function mk(d){ var m = d.getMonth() + 1; return d.getFullYear() + '-' + (m < 10 ? '0' : '') + m; }
+function fmt(d){ return d.toLocaleDateString('es-MX', { day: 'numeric', month: 'short' }); }
+function monthLabel(mStr){
+  if (!mStr) return '';
+  var p = mStr.split('-').map(Number);
+  var d = new Date(p[0], p[1] - 1, 1);
+  return d.toLocaleDateString('es-MX', { month: 'short' });
+}
+function monthLabelFull(mStr){
+  if (!mStr) return '';
+  var p = mStr.split('-').map(Number);
+  var d = new Date(p[0], p[1] - 1, 1);
+  return d.toLocaleDateString('es-MX', { month: 'long', year: 'numeric' });
+}
+function dueDate(y, m, day){ var last = new Date(y, m + 1, 0).getDate(); return new Date(y, m, Math.min(day, last)); }
+function getMonthList(startM, endM){
+  var res = [];
+  if (!startM) return res;
+  var s = startM.split('-').map(Number), e = endM.split('-').map(Number);
+  var y = s[0], m = s[1];
+  while (y < e[0] || (y === e[0] && m <= e[1])) {
+    res.push(y + '-' + (m < 10 ? '0' : '') + m);
+    m++;
+    if (m > 12) { m = 1; y++; }
+  }
+  return res;
+}
+function vib(ms){ if (navigator.vibrate) navigator.vibrate(ms || 35); }
+
+function getDebt(u){
+  var t = today(), curM = mk(t);
+  var start = u.startMonth || curM;
+  var paid = Array.isArray(u.paidMonths) ? u.paidMonths : (u.paidFor ? [u.paidFor] : []);
+  if (u.paused) {
+    return { paused: true, unpaid: [], count: 0, debt: 0, isCurPaid: paid.indexOf(curM) !== -1, nextD: null, paidMonths: paid };
+  }
+  var list = getMonthList(start, curM);
+  var unpaid = [];
+  list.forEach(function(m){
+    if (paid.indexOf(m) === -1) {
+      if (m < curM) {
+        unpaid.push(m);
+      } else if (m === curM) {
+        if (t.getDate() >= (u.day || 1)) unpaid.push(m);
+      }
+    }
+  });
+  var isCurPaid = paid.indexOf(curM) !== -1;
+  var targetM = isCurPaid ? (function(){
+    var p = curM.split('-').map(Number);
+    var y = p[0], m = p[1] + 1; if (m > 12) { m = 1; y++; }
+    return y + '-' + (m < 10 ? '0' : '') + m;
+  })() : curM;
+  var pTarget = targetM.split('-').map(Number);
+  var nextD = dueDate(pTarget[0], pTarget[1] - 1, u.day || 1);
+  return {
+    paused: false,
+    unpaid: unpaid,
+    count: unpaid.length,
+    debt: unpaid.length * (+u.amount || 0),
+    isCurPaid: isCurPaid,
+    nextD: nextD,
+    paidMonths: paid
+  };
+}
+
+function userChip(deb, u){
+  if (u.paused) return '<span class="chip warn"><i class="icon" style="font-size:13px">pause</i> Pausado</span>';
+  if (deb.count > 0) return '<span class="chip bad">Debe ' + deb.count + ' ' + (deb.count === 1 ? 'mes' : 'meses') + '</span>';
+  if (deb.isCurPaid) return '<span class="chip ok"><i class="icon" style="font-size:13px">check</i> Al corriente</span>';
+  var diff = Math.round((deb.nextD - today()) / 864e5);
+  if (diff === 0) return '<span class="chip warn">Cobra hoy</span>';
+  return '<span class="chip ' + (diff <= 3 ? 'warn' : '') + '">En ' + diff + ' d</span>';
+}
+
+function allUsers(){
+  var a = [];
+  S.accounts.forEach(function(c){
+    c.users.forEach(function(u){
+      a.push({ c: c, u: u, deb: getDebt(u) });
+    });
+  });
+  return a;
+}
+
+function urow(x, acc){
+  var c = x.c, u = x.u, deb = x.deb;
+  var sub = [];
+  if (acc) sub.push('<span>' + esc(c.name) + '</span>');
+  sub.push('<span>' + money(u.amount) + '</span>');
+  if (u.pfl) sub.push('<span>' + esc(u.pfl) + (u.pin ? ' PIN ' + esc(u.pin) : '') + '</span>');
+  if (deb.count > 0) {
+    sub.push('<span style="color:var(--bad)">Adeudo: ' + deb.unpaid.map(monthLabel).join(', ') + '</span>');
+  } else if (!u.paused && deb.nextD) {
+    sub.push('<span>' + (deb.isCurPaid ? 'Próximo ' : 'Corte ') + fmt(deb.nextD) + '</span>');
+  }
+  return '<div class="row ' + (u.paused ? 'paused' : '') + '">' +
+    (acc ? badge(c, 1) : '') +
+    '<div class="grow" onclick="editUser(\'' + c.id + '\',\'' + u.id + '\')">' +
+      '<b>' + esc(u.name) + '</b>' +
+      '<small>' + sub.join('') + '</small>' +
+    '</div>' +
+    userChip(deb, u) +
+    '<button class="mini ' + (deb.count > 0 ? 'bad' : 'primary') + '" onclick="quickPay(\'' + c.id + '\',\'' + u.id + '\')">' +
+      (deb.count > 0 ? 'Cobrar' : (deb.isCurPaid ? 'Deshacer' : 'Ya pagó')) +
+    '</button>' +
+    '<button class="mini d" title="Eliminar usuario" onclick="quickDelUser(this,\'' + c.id + '\',\'' + u.id + '\')"><i class="icon" style="font-size:16px">delete</i></button>' +
+  '</div>';
+}
+
+function quickPay(cid, uid){
+  vib(40);
+  var c = findAcc(cid), u = c.users.filter(function(x){ return x.id === uid; })[0];
+  var deb = getDebt(u);
+  if (!Array.isArray(u.paidMonths)) u.paidMonths = u.paidFor ? [u.paidFor] : [];
+  if (deb.count > 0) {
+    var mToPay = deb.unpaid[0];
+    u.paidMonths.push(mToPay);
+    toast('Cobrado mes de ' + monthLabelFull(mToPay));
+  } else if (deb.isCurPaid) {
+    u.paidMonths.pop();
+    toast('Se deshizo el último pago');
+  } else {
+    var curM = mk(today());
+    if (u.paidMonths.indexOf(curM) === -1) u.paidMonths.push(curM);
+    toast('Mes corriente marcado como pagado');
+  }
+  save(); render();
+}
+
+function quickDelUser(btn, cid, uid){
+  vib(50);
+  if (!btn.dataset.s) {
+    btn.dataset.s = "1";
+    btn.innerHTML = '<i class="icon" style="font-size:16px">check</i>';
+    toast('Toca otra vez para eliminar');
+    setTimeout(function(){ btn.dataset.s = ''; btn.innerHTML = '<i class="icon" style="font-size:16px">delete</i>'; }, 3000);
+    return;
+  }
+  delUser(cid, uid);
+}
+
+function home(){
+  var us = allUsers();
+  var totMonth = 0, gotMonth = 0, totalDebt = 0;
+  var curM = mk(today());
+  us.forEach(function(x){
+    var u = x.u, deb = x.deb;
+    if (!u.paused) totMonth += +u.amount || 0;
+    if (deb.isCurPaid) gotMonth += +u.amount || 0;
+    totalDebt += deb.debt;
+  });
+
+  var bTxt = 'Sin respaldos registrados', bWarn = true;
+  if (S.lastBackup) {
+    var days = Math.floor((Date.now() - S.lastBackup) / 864e5);
+    bTxt = days === 0 ? 'Respaldo al día (hoy)' : 'Último respaldo hace ' + days + (days === 1 ? ' día' : ' días');
+    bWarn = days > 7;
+  }
+
+  var h = '<h1>Passly</h1><p>Gestión de cuentas, cobros y clientes</p>' +
+    '<div class="top-actions">' +
+      '<button class="btn" style="flex:2" onclick="editAcc(\'\')"><i class="icon">add</i> Nueva cuenta</button>' +
+      '<button class="btn g" style="flex:1" onclick="openVault()"><i class="icon">lock_open</i> Bóveda</button>' +
+    '</div>';
+
+  if (!S.accounts.length) {
+    return h + '<div class="empty"><p>Aún no tienes cuentas registradas. Crea tu primera cuenta madre o servicio compartido.</p><button class="btn" onclick="editAcc(\'\')">Crear cuenta</button></div>' + homeFooter(bTxt, bWarn);
+  }
+
+  h += '<div class="strip">' +
+    '<div><b>' + money(totMonth) + '</b><small>Meta mes</small></div>' +
+    '<div><b style="color:var(--ok)">' + money(gotMonth) + '</b><small>Cobrado</small></div>' +
+    '<div><b style="color:' + (totalDebt ? 'var(--bad)' : 'var(--mu)') + '">' + money(totalDebt) + '</b><small>Adeudo total</small></div>' +
+  '</div>' +
+  ownBlock(totMonth) +
+  '<h2>Cobros y vencimientos</h2>';
+
+  if (!us.length) {
+    return h + '<div class="empty"><p>Agrega perfiles o usuarios a tus cuentas para visualizarlos aquí.</p></div>' + homeFooter(bTxt, bWarn);
+  }
+
+  us.sort(function(a,b){
+    if (b.deb.count !== a.deb.count) return b.deb.count - a.deb.count;
+    return (a.deb.nextD || 0) - (b.deb.nextD || 0);
+  });
+
+  return h + us.map(function(x){ return urow(x, true); }).join('') + homeFooter(bTxt, bWarn);
+}
+
+function homeFooter(bTxt, bWarn){
+  return '<div class="card" style="margin-top:28px;border-style:dashed;padding:14px 16px;display:flex;align-items:center;justify-content:space-between">' +
+    '<div><b style="font-size:14px;display:flex;align-items:center;gap:6px"><i class="icon" style="font-size:18px;color:var(--primary)">cloud_done</i> Seguridad de datos</b><small style="color:var(--mu);font-size:12px">' + bTxt + '</small></div>' +
+    '<button class="btn subtle ' + (bWarn ? 'd' : '') + '" onclick="backup()">Respaldar</button>' +
+  '</div>';
+}
+
+function accts(){
+  var h = '<h1>Cuentas</h1><p>Administra servicios, contraseñas y perfiles</p>' +
+    '<div class="top-actions">' +
+      '<button class="btn" onclick="editAcc(\'\')"><i class="icon">add</i> Nueva cuenta</button>' +
+      '<button class="btn g" onclick="openVault()"><i class="icon">lock_open</i> Bóveda de claves</button>' +
+    '</div>';
+
+  if (!S.accounts.length) return h + '<div class="empty"><p>No tienes cuentas todavía.</p></div>';
+
+  return h + S.accounts.map(function(c){
+    var t = 0; c.users.forEach(function(u){ if (!u.paused) t += +u.amount || 0; });
+    var exp = !!ACC_EXP[c.id];
+    var tab = ACC_TAB[c.id] || 'users';
+
+    var inner = '';
+    if (exp) {
+      inner = '<div class="subtabs">' +
+        '<button class="subtab ' + (tab === 'users' ? 'on' : '') + '" onclick="setAccTab(\'' + c.id + '\',\'users\')"><i class="icon" style="font-size:16px">group</i> Perfiles (' + c.users.length + ')</button>' +
+        '<button class="subtab ' + (tab === 'pay' ? 'on' : '') + '" onclick="setAccTab(\'' + c.id + '\',\'pay\')"><i class="icon" style="font-size:16px">credit_card</i> Facturación</button>' +
+        '<button class="subtab ' + (tab === 'cred' ? 'on' : '') + '" onclick="setAccTab(\'' + c.id + '\',\'cred\')"><i class="icon" style="font-size:16px">key</i> Accesos</button>' +
+      '</div>';
+
+      if (tab === 'users') {
+        inner += c.users.map(function(u){ return urow({ c: c, u: u, deb: getDebt(u) }, false); }).join('') +
+          (c.users.length < (c.slots || 4) ? '<button class="add" onclick="editUser(\'' + c.id + '\',\'\')"><i class="icon">person_add</i> Agregar perfil / usuario</button>' : '');
+        if (!c.users.length) {
+          inner += '<div style="text-align:center;padding:12px;color:var(--mu);font-size:13px">Sin perfiles asignados.</div>';
+        }
+      } else if (tab === 'pay') {
+        inner += '<div class="strip" style="grid-template-columns:1fr 1fr;margin-bottom:10px">' +
+          '<div><b>' + money(c.cost) + '</b><small>Mi costo al mes</small></div>' +
+          '<div><b style="color:var(--ok)">' + money(t - (+c.cost || 0)) + '</b><small>Ganancia neta</small></div>' +
+        '</div>' + orow(c, false);
+      } else if (tab === 'cred') {
+        if (c.mode === 'fam') {
+          inner += '<div style="padding:16px;text-align:center;color:var(--mu);font-size:13px"><i class="icon" style="font-size:24px;display:block;margin-bottom:4px;color:var(--primary)">family_restroom</i> Esta cuenta está configurada como <b>Grupo familiar</b>.<br>Los usuarios ingresan con su propio correo sin compartir clave maestra.</div>';
+        } else {
+          inner += cinfo(c) +
+            '<button class="btn g" style="width:100%;margin-top:8px" onclick="pwdNotice(\'' + c.id + '\')"><i class="icon">campaign</i> Aviso de actualización de contraseña</button>';
+        }
+      }
+    }
+
+    return '<div class="card">' +
+      '<div class="card-header">' +
+        badge(c) +
+        '<div class="grow" onclick="toggleAcc(\'' + c.id + '\')">' +
+          '<b>' + esc(c.name) + '</b>' +
+          '<small><span>' + c.users.length + '/' + (c.slots || 4) + ' perfiles</span><span>' + money(t) + ' al mes</span></small>' +
+        '</div>' +
+        '<button class="mini" onclick="editAcc(\'' + c.id + '\')">Editar</button>' +
+        '<button class="mini d" onclick="quickDelAcc(this,\'' + c.id + '\')">Eliminar</button>' +
+        '<button class="mini" style="border-radius:9999px;width:34px;height:34px;padding:0;display:grid;place-items:center" onclick="toggleAcc(\'' + c.id + '\')"><i class="icon">' + (exp ? 'expand_less' : 'expand_more') + '</i></button>' +
+      '</div>' +
+      inner +
+    '</div>';
+  }).join('');
+}
+
+function toggleAcc(cid){
+  ACC_EXP[cid] = !ACC_EXP[cid];
+  if (!ACC_TAB[cid]) ACC_TAB[cid] = 'users';
+  render();
+}
+function setAccTab(cid, tab){
+  ACC_EXP[cid] = true;
+  ACC_TAB[cid] = tab;
+  render();
+}
+
+function quickDelAcc(btn, cid){
+  vib(50);
+  var c = findAcc(cid);
+  if (!btn.dataset.s) {
+    btn.dataset.s = "1";
+    btn.textContent = '¿Eliminar ' + c.users.length + ' usuarios?';
+    setTimeout(function(){ btn.dataset.s = ''; btn.textContent = 'Eliminar'; }, 3500);
+    return;
+  }
+  delAcc(cid);
+}
+
+function render(){
+  var views = { home: home, accts: accts, clients: clients, sets: sets };
+  $('#app').innerHTML = views[view]();
+  ['home','accts','clients','sets'].forEach(function(k, idx){
+    $('#n' + (idx + 1)).className = 'nav-btn' + (view === k ? ' on' : '');
+  });
+}
+function go(v){ view = v; render(); window.scrollTo(0,0); }
+
+function openS(h){
+  $('#sheet').innerHTML = '<div class="bk" onclick="closeS()"></div><div class="pan">' + h + '</div>';
+  $('#sheet').className = 'on';
+}
+function closeS(){
+  $('#sheet').className = '';
+  $('#sheet').innerHTML = '';
+  if (vaultTimer) clearInterval(vaultTimer);
+}
+function sure(b, fn){
+  if (!b.dataset.s) { b.dataset.s = "1"; b.textContent = '¿Seguro? Toca otra vez'; return; }
+  fn();
+}
+function findAcc(id){ return S.accounts.filter(function(c){ return c.id === id; })[0]; }
+
+function editAcc(id){
+  var c = findAcc(id), fam = c && c.mode === 'fam'; SEL = c && c.logo || '';
+  openS('<h2>' + (c ? 'Editar cuenta' : 'Nueva cuenta') + '</h2>' +
+    '<label>Nombre de la cuenta</label><input id="f1" value="' + esc(c ? c.name : '') + '" placeholder="Ej. Netflix 4K Familias">' +
+    '<label>Plataforma / Icono</label>' + platPicker() +
+    '<label>Modo de acceso</label>' +
+    '<select id="f12" onchange="modeSw()">' +
+      '<option value="cred"' + (fam ? '' : ' selected') + '>Con correo y contraseña</option>' +
+      '<option value="fam"' + (fam ? ' selected' : '') + '>Grupo familiar (sin contraseña compartida)</option>' +
+    '</select>' +
+    '<div id="cred"' + (fam ? ' style="display:none"' : '') + '>' +
+      '<label>Correo o usuario maestro</label><input id="f4" autocapitalize="none" value="' + esc(c && c.login || '') + '">' +
+      '<label>Contraseña de la cuenta</label>' +
+      '<div style="display:flex;gap:8px">' +
+        '<input id="f5" type="password" autocomplete="off" placeholder="' + (c && c.pw ? 'Guardada. Escribe para cambiarla' : 'Se almacena cifrada') + '">' +
+        (c && c.pw ? '<button class="mini" type="button" onclick="showPw(\'' + id + '\')">Ver</button>' : '') +
+      '</div>' +
+    '</div>' +
+    '<div class="grid-2">' +
+      '<div><label>Costo mensual que yo pago</label><input id="f6" type="number" inputmode="decimal" value="' + (c && c.cost || '') + '" placeholder="0"></div>' +
+      '<div><label>Día de corte mío (1 al 31)</label><input id="f7" type="number" inputmode="numeric" min="1" max="31" value="' + (c && c.payDay || '') + '" placeholder="1"></div>' +
+    '</div>' +
+    '<div class="grid-2">' +
+      '<div><label>Límite de perfiles</label><input id="f9" type="number" inputmode="numeric" min="1" max="10" value="' + (c && c.slots || 4) + '"></div>' +
+      '<div><label>Medio de pago</label><input id="f8" value="' + esc(c && c.method || '') + '" placeholder="Ej. Débito Nu"></div>' +
+    '</div>' +
+    '<div class="acts">' +
+      (c ? '<button class="btn d" onclick="sure(this,function(){delAcc(\'' + id + '\')})">Eliminar</button>' : '') +
+      '<button class="btn" onclick="saveAcc(\'' + id + '\')">Guardar</button>' +
+    '</div>');
+}
+
+function saveAcc(id){
+  var v = {
+    name: $('#f1').value.trim() || 'Cuenta',
+    login: $('#f4') ? $('#f4').value.trim() : '',
+    pw: $('#f12').value === 'fam' ? '' : ($('#f5') ? $('#f5').value : ''),
+    cost: parseFloat($('#f6').value) || 0,
+    payDay: Math.min(31, Math.max(0, parseInt($('#f7').value) || 0)),
+    method: $('#f8').value.trim(),
+    slots: Math.min(10, Math.max(1, parseInt($('#f9').value) || 4)),
+    mode: $('#f12').value,
+    logo: SEL
+  };
+  function done(p){
+    var c = findAcc(id);
+    if (!c) { c = { id: uid(), users: [] }; S.accounts.push(c); }
+    c.name = v.name; c.login = v.login; c.cost = v.cost; c.payDay = v.payDay;
+    c.method = v.method; c.slots = v.slots; c.mode = v.mode; c.logo = v.logo;
+    if (p) c.pw = p;
+    save(); closeS(); render(); toast('Cuenta guardada');
+  }
+  if (v.pw) withKey(function(){ enc(v.pw).then(done); }); else done(null);
+}
+
+function delAcc(id){
+  S.accounts = S.accounts.filter(function(c){ return c.id !== id; });
+  save(); closeS(); render(); toast('Cuenta eliminada');
+}
+
+function editUser(cid, id){
+  var c = findAcc(cid), u = id ? c.users.filter(function(x){ return x.id === id; })[0] : null;
+  var curM = mk(today());
+  var start = (u && u.startMonth) || curM;
+  var paused = u ? !!u.paused : false;
+
+  openS('<h2>' + (u ? 'Editar usuario' : 'Nuevo usuario') + '</h2>' +
+    '<label>Nombre completo</label><input id="uf1" value="' + esc(u ? u.name : '') + '" placeholder="Nombre del cliente">' +
+    '<label>WhatsApp (10 dígitos)</label><input id="uf9" type="tel" inputmode="numeric" value="' + esc(u && u.phone || '') + '">' +
+    '<div class="grid-2">' +
+      '<div><label>Nombre de su perfil</label><input id="uf10" value="' + esc(u && u.pfl || '') + '" placeholder="Ej. Perfil 2"></div>' +
+      '<div><label>PIN de acceso</label><input id="uf11" inputmode="numeric" value="' + esc(u && u.pin || '') + '" placeholder="Opcional"></div>' +
+    '</div>' +
+    '<div class="grid-2">' +
+      '<div><label>Monto mensual</label><input id="uf2" type="number" inputmode="decimal" value="' + (u ? u.amount : '') + '" placeholder="0"></div>' +
+      '<div><label>Día de cobro (1 al 31)</label><input id="uf3" type="number" inputmode="numeric" min="1" max="31" value="' + (u ? u.day : '') + '" placeholder="1"></div>' +
+    '</div>' +
+    '<div class="grid-2">' +
+      '<div><label>Cobrar desde el mes</label><input id="ufStart" type="month" value="' + start + '"></div>' +
+      '<div><label>Estado del servicio</label>' +
+        '<select id="ufPaused">' +
+          '<option value="0"' + (!paused ? ' selected' : '') + '>Activo (acumula)</option>' +
+          '<option value="1"' + (paused ? ' selected' : '') + '>Pausado (suspendido)</option>' +
+        '</select>' +
+      '</div>' +
+    '</div>' +
+    (u ? '<div style="margin-top:16px;display:flex;gap:8px;flex-direction:column">' +
+      '<button class="btn g" onclick="ticket(\'' + cid + '\',\'' + id + '\')"><i class="icon">receipt_long</i> Ticket de este servicio</button>' +
+      '<button class="btn g" onclick="welcomeCard(\'' + cid + '\',\'' + id + '\')"><i class="icon">celebration</i> Tarjeta de bienvenida</button>' +
+      '<button class="btn" onclick="ticketCliFor(\'' + cid + '\',\'' + id + '\')"><i class="icon">account_balance_wallet</i> Ticket con todos sus servicios</button>' +
+    '</div>' : '') +
+    '<div class="acts">' +
+      (u ? '<button class="btn d" onclick="sure(this,function(){delUser(\'' + cid + '\',\'' + id + '\')})">Eliminar</button>' : '') +
+      '<button class="btn" onclick="saveUser(\'' + cid + '\',\'' + id + '\')">Guardar</button>' +
+    '</div>');
+}
+
+function saveUser(cid, id){
+  var c = findAcc(cid);
+  var n = $('#uf1').value.trim() || 'Usuario';
+  var a = parseFloat($('#uf2').value) || 0;
+  var d = Math.min(31, Math.max(1, parseInt($('#uf3').value) || 1));
+  var phone = $('#uf9').value.replace(/\D/g, '');
+  var pfl = $('#uf10').value.trim();
+  var pin = $('#uf11').value.trim();
+  var startMonth = $('#ufStart').value || mk(today());
+  var paused = $('#ufPaused').value === '1';
+
+  var u = id ? c.users.filter(function(x){ return x.id === id; })[0] : null;
+  var data = { name: n, amount: a, day: d, phone: phone, pfl: pfl, pin: pin, startMonth: startMonth, paused: paused };
+  if (u) {
+    Object.assign(u, data);
+  } else {
+    c.users.push(Object.assign({ id: uid(), paidMonths: [] }, data));
+  }
+  save(); closeS(); render(); toast('Usuario guardado');
+}
+
+function delUser(cid, id){
+  var c = findAcc(cid);
+  c.users = c.users.filter(function(x){ return x.id !== id; });
+  save(); closeS(); render(); toast('Usuario eliminado');
+}
+
+var vaultTimer = null;
+function openVault(){
+  withKey(function(){
+    var accs = S.accounts.filter(function(c){ return c.mode !== 'fam' && (c.login || c.pw); });
+    var secLeft = 30;
+    var timerStr = function(){ return 'Se cerrará en ' + secLeft + 's'; };
+
+    var renderList = function(){
+      var h = '<h2><i class="icon" style="color:var(--primary)">lock_open</i> Bóveda de contraseñas</h2>' +
+        '<p style="display:flex;justify-content:space-between;align-items:center">' +
+          '<span>Credenciales protegidas</span>' +
+          '<b id="vCountdown" class="chip warn">' + timerStr() + '</b>' +
+        '</p><div style="height:12px"></div>';
+
+      if (!accs.length) {
+        h += '<div class="empty"><p>No tienes cuentas con usuario o contraseñas guardadas.</p></div>';
+      } else {
+        h += accs.map(function(c){
+          return '<div class="vault">' +
+            '<div class="vr">' +
+              '<span style="display:flex;align-items:center;gap:8px"><b>' + esc(c.name) + '</b></span>' +
+              (c.login ? '<button class="mini" onclick="copyTxt(\'' + esc(c.login) + '\')">Copiar usuario</button>' : '') +
+            '</div>' +
+            (c.login ? '<div class="vr"><span>Usuario: <code>' + esc(c.login) + '</code></span></div>' : '') +
+            (c.pw ? '<div class="vr"><span>Clave: <code id="pwv-' + c.id + '">••••••••</code></span>' +
+              '<span>' +
+                '<button class="mini" onclick="toggleVaultPw(\'' + c.id + '\')">Ver</button> ' +
+                '<button class="mini" onclick="pwCopy(\'' + c.id + '\')">Copiar</button>' +
+              '</span></div>' : '') +
+          '</div>';
+        }).join('');
+      }
+
+      h += '<div class="acts" style="flex-direction:column">' +
+        (accs.length ? '<button class="btn g" onclick="copyAllVault()"><i class="icon">content_copy</i> Copiar todas las contraseñas</button>' : '') +
+        '<button class="btn" onclick="closeS()">Cerrar bóveda</button>' +
+      '</div>';
+      openS(h);
+    };
+
+    renderList();
+    if (vaultTimer) clearInterval(vaultTimer);
+    vaultTimer = setInterval(function(){
+      secLeft--;
+      var el = $('#vCountdown');
+      if (el) el.textContent = timerStr();
+      if (secLeft <= 0) {
+        clearInterval(vaultTimer);
+        closeS();
+        toast('Bóveda bloqueada por seguridad');
+      }
+    }, 1000);
+  });
+}
+
+function toggleVaultPw(id){
+  var el = $('#pwv-' + id);
+  if (!el) return;
+  if (el.dataset.v) {
+    el.textContent = '••••••••';
+    delete el.dataset.v;
+  } else {
+    pwGet(id, function(t){
+      el.textContent = t;
+      el.dataset.v = "1";
+    });
+  }
+}
+
+async function copyAllVault(){
+  vib(50);
+  if (!confirm('⚠️ Advertencia: Todas las contraseñas se copiarán en texto plano al portapapeles. ¿Deseas continuar?')) return;
+  var accs = S.accounts.filter(function(c){ return c.mode !== 'fam' && (c.login || c.pw); });
+  var lines = ['--- BÓVEDA DE ACCESOS PASSLY ---'];
+  for (var i = 0; i < accs.length; i++) {
+    var c = accs[i];
+    var p = c.pw ? await dec(c.pw) : '(sin clave)';
+    lines.push('Cuenta: ' + c.name + '\nUsuario: ' + (c.login || '-') + '\nContraseña: ' + p + '\n');
+  }
+  copyTxt(lines.join('\n'));
+}
+
+var KEY_CRYPTO = null, pend = null, TK = '', TB = '';
+function b64(u){ return btoa(String.fromCharCode.apply(null, u)); }
+function ub(s){ return Uint8Array.from(atob(s), function(c){ return c.charCodeAt(0); }); }
+async function derive(pw, salt){
+  var m = await crypto.subtle.importKey('raw', new TextEncoder().encode(pw), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey({ name: 'PBKDF2', salt: ub(salt), iterations: 150000, hash: 'SHA-256' }, m, { name: 'AES-GCM', length: 256 }, false, ['encrypt','decrypt']);
+}
+async function enc(t){
+  var iv = crypto.getRandomValues(new Uint8Array(12));
+  var c = await crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv }, KEY_CRYPTO, new TextEncoder().encode(t));
+  return b64(iv) + '.' + b64(new Uint8Array(c));
+}
+async function dec(s){
+  var p = s.split('.'), d = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: ub(p[0]) }, KEY_CRYPTO, ub(p[1]));
+  return new TextDecoder().decode(d);
+}
+function say(t){ var m = $('#msg'); if (m) m.textContent = t; }
+
+function withKey(fn){
+  if (KEY_CRYPTO) { fn(); return; }
+  pend = fn;
+  var n = !S.vault;
+  openS('<h2>' + (n ? 'Crea tu clave maestra' : 'Desbloquear contraseñas') + '</h2>' +
+    '<p>' + (n ? 'Protege tus contraseñas guardadas con cifrado de grado militar. Si la olvidas, nadie podrá recuperarlas.' : 'Escribe tu clave maestra para desbloquear.') + '</p>' +
+    '<label>Clave maestra</label><input id="mf1" type="password" autocomplete="off">' +
+    (n ? '<label>Repite la clave</label><input id="mf2" type="password" autocomplete="off">' : '') +
+    '<div class="acts">' +
+      '<button class="btn g" onclick="pend=null;closeS()">Cancelar</button>' +
+      '<button class="btn" onclick="doUnlock()">Continuar</button>' +
+    '</div><p id="msg" style="margin-top:10px;color:var(--bad)"></p>');
+}
+
+async function doUnlock(){
+  var p = $('#mf1').value;
+  if (!p) { say('Escribe tu clave.'); return; }
+  try {
+    if (!S.vault) {
+      if (p.length < 6 || p !== $('#mf2').value) { say('Usa al menos 6 caracteres y repítela igual.'); return; }
+      var salt = b64(crypto.getRandomValues(new Uint8Array(16)));
+      KEY_CRYPTO = await derive(p, salt);
+      S.vault = { salt: salt, check: await enc('ok') };
+      save();
+    } else {
+      KEY_CRYPTO = await derive(p, S.vault.salt);
+      if (await dec(S.vault.check) !== 'ok') throw 0;
+    }
+  } catch (e) {
+    KEY_CRYPTO = null; say('Clave incorrecta.'); return;
+  }
+  var f = pend; pend = null; closeS(); if (f) f();
+}
+
+function showPw(id){
+  var fill = function(){ dec(findAcc(id).pw).then(function(t){ var e = $('#f5'); e.value = t; e.type = 'text'; }); };
+  if (KEY_CRYPTO) fill(); else withKey(function(){ editAcc(id); fill(); });
+}
+
+function ochip(i){
+  if (i.paid) return '<span class="chip ok">Al corriente</span>';
+  if (i.diff < 0) return '<span class="chip bad">Vencida hace ' + (-i.diff) + ' d</span>';
+  if (i.diff <= 3) return '<span class="chip warn">' + (i.diff === 0 ? 'Vence hoy' : 'Por vencer') + '</span>';
+  return '<span class="chip ok">Activa</span>';
+}
+
+function orow(c, nm){
+  if (!c.payDay) return '';
+  var t = today(), paid = c.paidFor === mk(t);
+  var d = dueDate(t.getFullYear(), t.getMonth() + (paid ? 1 : 0), c.payDay);
+  var diff = Math.round((d - t) / 864e5);
+  var i = { paid: paid, d: d, diff: diff };
+  return '<div class="row" style="border-left:3px solid var(--primary)">' +
+    (nm ? badge(c, 1) : '') +
+    '<div class="grow" onclick="editAcc(\'' + c.id + '\')">' +
+      '<b>' + (nm ? esc(c.name) : 'Mi pago del servicio') + '</b>' +
+      '<small><span>' + money(c.cost) + '</span><span>' + (i.paid ? 'Próximo ' : 'Vence ') + fmt(i.d) + '</span>' + (c.method ? '<span>' + esc(c.method) + '</span>' : '') + '</small>' +
+    '</div>' +
+    ochip(i) +
+    '<button class="mini" onclick="payOwn(\'' + c.id + '\')">' + (i.paid ? 'Deshacer' : 'Ya pagué') + '</button>' +
+  '</div>';
+}
+
+function cinfo(c){
+  var h = '';
+  if ((c.login || c.pw) && c.mode !== 'fam') {
+    h = '<div class="vault">' +
+      (c.login ? '<div class="vr"><span>👤 <code>' + esc(c.login) + '</code></span><button class="mini" onclick="copyTxt(\'' + esc(c.login) + '\')">Copiar</button></div>' : '') +
+      (c.pw ? '<div class="vr"><span>🔑 <code id="pw-' + c.id + '">••••••••</code></span><span><button class="mini" onclick="pwView(\'' + c.id + '\')">Ver</button> <button class="mini" onclick="pwCopy(\'' + c.id + '\')">Copiar</button></span></div>' : '') +
+    '</div>';
+  }
+  return h;
+}
+
+function payOwn(id){
+  vib(40);
+  var c = findAcc(id);
+  var curM = mk(today());
+  c.paidFor = c.paidFor === curM ? null : curM;
+  save(); render();
+}
+
+function ownBlock(tot){
+  var os = S.accounts.filter(function(c){ return c.payDay; });
+  var cost = 0; S.accounts.forEach(function(c){ cost += +c.cost || 0; });
+  if (!os.length && !cost) return '';
+  return '<div class="strip" style="grid-template-columns:1fr 1fr">' +
+    '<div><b>' + money(cost) + '</b><small>Mi costo al mes</small></div>' +
+    '<div><b style="color:var(--ok)">' + money(tot - cost) + '</b><small>Ganancia neta</small></div>' +
+  '</div>';
+}
+
+// TICKETS Y GENERADORES VISUALES
+var CUR_C = null, CUR_U = null, CUR_PW = '', CUR_DEB = null;
+
+function ticket(cid, id){
+  var c = findAcc(cid), u = c.users.filter(function(x){ return x.id === id; })[0];
+  var deb = getDebt(u);
+  CUR_C = c; CUR_U = u; CUR_DEB = deb; CUR_PW = '';
+  TB = 'Ticket de pago — Passly\n' +
+    'Cuenta: ' + c.name + '\n' +
+    'Cliente: ' + u.name + '\n' +
+    (u.pfl ? 'Perfil: ' + u.pfl + (u.pin ? ' (PIN ' + u.pin + ')' : '') + '\n' : '') +
+    'Monto mensual: ' + money(u.amount) + '\n' +
+    'Día de cobro: ' + u.day + ' de cada mes\n' +
+    'Estado: ' + (deb.count > 0 ? 'Adeudo pendiente (' + deb.count + ' meses: ' + deb.unpaid.map(monthLabel).join(', ') + ')' : 'Al corriente') + '\n' +
+    'Total a pagar: ' + money(deb.count > 0 ? deb.debt : u.amount) + '\n' +
+    payInfo();
+  TK = TB; PH = u.phone || '';
+
+  var opt = (c.mode !== 'fam' && (c.login || c.pw)) ?
+    (c.pw && !KEY_CRYPTO ? '<button class="mini" style="margin-top:14px" onclick="withKey(function(){ticket(\'' + cid + '\',\'' + id + '\')})">Desbloquear para adjuntar clave</button>' :
+    '<label class="chk"><input type="checkbox" id="inc" onchange="tkPw(\'' + cid + '\')"> Incluir usuario y contraseña en el ticket</label>') : '';
+
+  openS('<h2>Ticket de servicio</h2><div class="tkc" style="white-space:pre-wrap;font-family:ui-monospace,monospace;font-size:13px" id="tk"></div>' +
+    opt +
+    '<div class="acts">' +
+      '<button class="btn" onclick="saveSingleImg()"><i class="icon">image</i> Guardar imagen</button>' +
+      '<button class="btn g" onclick="shareSingleImg()"><i class="icon">share</i> Compartir</button>' +
+    '</div>' +
+    '<div class="acts">' +
+      '<button class="btn g" onclick="copyTk()">Copiar texto</button>' +
+      '<button class="btn g" onclick="welcomeCard(\'' + cid + '\',\'' + id + '\')"><i class="icon">celebration</i> Tarjeta bienvenida</button>' +
+    '</div>' +
+    (u.phone ? '<a class="btn w" id="wa" target="_blank" rel="noopener" style="margin-top:10px;text-decoration:none;display:flex" href="' + waLink(u.phone, TK) + '"><i class="icon">chat</i> Enviar por WhatsApp</a>' : '') +
+    '<p id="msg" style="margin-top:10px"></p>');
+  showTk();
+}
+
+function tkPw(cid){
+  var c = findAcc(cid);
+  if (!$('#inc').checked) { TK = TB; CUR_PW = ''; showTk(); return; }
+  var add = function(p){
+    CUR_PW = p;
+    TK = TB + '\nDatos de acceso:\nUsuario: ' + (c.login || '-') + (p ? '\nContraseña: ' + p : '');
+    showTk();
+  };
+  if (c.pw) dec(c.pw).then(add); else add('');
+}
+
+function copyTk(){ copyTxt(TK); }
+function shareTk(){
+  if (navigator.share) navigator.share({ text: TK }).catch(function(){ copyTk(); });
+  else copyTk();
+}
+var PH = '';
+function waLink(p, t){
+  p = String(p || '').replace(/\D/g, '');
+  if (p.length === 10) p = '52' + p;
+  return 'https://wa.me/' + p + '?text=' + encodeURIComponent(t);
+}
+function showTk(){ var el = $('#tk'); if (el) el.textContent = TK; var a = $('#wa'); if (a) a.href = waLink(PH, TK); }
+
+function payInfo(){
+  var s = S.settings || {}, a = [];
+  if (s.owner) a.push('Titular: ' + s.owner);
+  if (s.bank) a.push('Banco: ' + s.bank);
+  if (s.clabe) a.push('CLABE o cuenta: ' + s.clabe);
+  return a.length ? '\n\nDatos de transferencia:\n' + a.join('\n') : '';
+}
+
+function toast(t){
+  var e = document.createElement('div');
+  e.className = 'toast';
+  e.textContent = t;
+  document.body.appendChild(e);
+  setTimeout(function(){ e.remove(); }, 2000);
+}
+function copyTxt(t){
+  vib(30);
+  var done = function(ok){ toast(ok ? 'Copiado al portapapeles' : 'No se pudo copiar'); };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(t).then(function(){ done(true); }, function(){ done(false); });
+  } else {
+    var a = document.createElement('textarea'); a.value = t; document.body.appendChild(a); a.select();
+    try { document.execCommand('copy'); done(true); } catch(e){ done(false); }
+    a.remove();
+  }
+}
+
+function pwGet(id, fn){ var c = findAcc(id); withKey(function(){ dec(c.pw).then(fn); }); }
+function pwView(id){
+  var e = $('#pw-' + id);
+  if (e.dataset.v) { e.textContent = '••••••••'; delete e.dataset.v; return; }
+  pwGet(id, function(t){
+    e.textContent = t; e.dataset.v = "1";
+    setTimeout(function(){ e.textContent = '••••••••'; delete e.dataset.v; }, 15000);
+  });
+}
+function pwCopy(id){ pwGet(id, copyTxt); }
+
+// TARJETA DE BIENVENIDA
+function welcomeCard(cid, id){
+  var c = findAcc(cid), u = c.users.filter(function(x){ return x.id === id; })[0];
+  var showModal = function(pwText){
+    var text = '🎉 ¡Bienvenido a tu suscripción!\n' +
+      'Hola ' + u.name + ', ya está configurado tu acceso:\n\n' +
+      '• Servicio: ' + c.name + '\n' +
+      (u.pfl ? '• Perfil: ' + u.pfl + (u.pin ? ' (PIN ' + u.pin + ')\n' : '\n') : '') +
+      (c.mode !== 'fam' ? '• Usuario: ' + (c.login || '-') + '\n• Contraseña: ' + (pwText || '••••••••') + '\n' : '') +
+      '• Mensualidad: ' + money(u.amount) + '\n' +
+      '• Día de cobro: ' + u.day + ' de cada mes\n' +
+      payInfo() + '\n\n' +
+      'Por favor usa únicamente tu perfil asignado. ¡Que lo disfrutes!';
+
+    openS('<h2>Tarjeta de bienvenida</h2>' +
+      '<div class="tkc" style="white-space:pre-wrap;font-family:ui-monospace,monospace;font-size:13px">' + esc(text) + '</div>' +
+      '<div class="acts">' +
+        '<button class="btn" onclick="saveWelcomeImg(\'' + cid + '\',\'' + id + '\',\'' + esc(pwText) + '\')"><i class="icon">image</i> Guardar imagen</button>' +
+        '<button class="btn g" onclick="shareWelcomeImg(\'' + cid + '\',\'' + id + '\',\'' + esc(pwText) + '\')"><i class="icon">share</i> Compartir</button>' +
+      '</div>' +
+      '<div class="acts">' +
+        '<button class="btn g" onclick="copyTxt(\'' + esc(text).replace(/'/g, "\\'") + '\')">Copiar texto</button>' +
+      '</div>' +
+      (u.phone ? '<a class="btn w" target="_blank" rel="noopener" style="margin-top:10px;text-decoration:none;display:flex" href="' + waLink(u.phone, text) + '"><i class="icon">chat</i> Enviar por WhatsApp</a>' : ''));
+  };
+
+  if (c.mode !== 'fam' && c.pw) {
+    if (KEY_CRYPTO) dec(c.pw).then(showModal);
+    else withKey(function(){ dec(c.pw).then(showModal); });
+  } else {
+    showModal('');
+  }
+}
+
+// AVISO DE ACTUALIZACIÓN DE CONTRASEÑA
+function pwdNotice(cid){
+  var c = findAcc(cid);
+  var showModal = function(pwText){
+    var text = '📢 AVISO DE ACTUALIZACIÓN DE ACCESO\n' +
+      'Servicio: ' + c.name + '\n\n' +
+      'Hola a todos, por mantenimiento se han actualizado las credenciales de acceso:\n\n' +
+      '👤 Usuario: ' + (c.login || '-') + '\n' +
+      '🔑 Nueva contraseña: ' + (pwText || '-') + '\n\n' +
+      'Por favor vuelvan a iniciar sesión con estos datos. Sus perfiles y avances siguen intactos.';
+
+    openS('<h2>Aviso de nueva contraseña</h2>' +
+      '<div class="tkc" style="white-space:pre-wrap;font-family:ui-monospace,monospace;font-size:13px">' + esc(text) + '</div>' +
+      '<div class="acts">' +
+        '<button class="btn" onclick="savePwdNoticeImg(\'' + cid + '\',\'' + esc(pwText) + '\')"><i class="icon">image</i> Guardar imagen</button>' +
+        '<button class="btn g" onclick="sharePwdNoticeImg(\'' + cid + '\',\'' + esc(pwText) + '\')"><i class="icon">share</i> Compartir</button>' +
+      '</div>' +
+      '<div class="acts">' +
+        '<button class="btn g" onclick="copyTxt(\'' + esc(text).replace(/'/g, "\\'") + '\')">Copiar texto</button>' +
+      '</div>');
+  };
+
+  if (c.pw) {
+    if (KEY_CRYPTO) dec(c.pw).then(showModal);
+    else withKey(function(){ dec(c.pw).then(showModal); });
+  } else {
+    showModal('');
+  }
+}
+
+function clients(){
+  var m = {};
+  S.accounts.forEach(function(c){
+    c.users.forEach(function(u){
+      var k = u.name.trim().toLowerCase();
+      if (!m[k]) m[k] = { name: u.name.trim(), phone: '', it: [], tot: 0, debt: 0 };
+      var g = m[k];
+      g.phone = g.phone || u.phone || '';
+      var deb = getDebt(u);
+      if (!u.paused) g.tot += +u.amount || 0;
+      g.debt += deb.debt;
+      g.it.push({ c: c, u: u, deb: deb });
+    });
+  });
+  var l = Object.keys(m).map(function(k){ return m[k]; }).sort(function(a,b){ return a.name.localeCompare(b.name); });
+  CL = l;
+
+  var h = '<h1>Clientes</h1><p>Control centralizado de pagos y saldos por persona</p><div style="height:14px"></div>';
+  if (!l.length) return h + '<div class="empty"><p>Tus clientes aparecerán aquí en cuanto agregues usuarios a tus cuentas.</p></div>';
+
+  return h + l.map(function(g, gi){
+    return '<div class="card">' +
+      '<div class="card-header">' +
+        '<div class="grow">' +
+          '<b>' + esc(g.name) + '</b>' +
+          '<small><span>' + (g.phone ? esc(g.phone) : 'Sin WhatsApp') + '</span><span>' + money(g.tot) + ' al mes</span></small>' +
+        '</div>' +
+        (g.debt > 0 ? '<span class="chip bad">Debe ' + money(g.debt) + '</span>' : '<span class="chip ok">Al corriente</span>') +
+      '</div>' +
+      g.it.map(function(x){
+        return '<div class="row ' + (x.u.paused ? 'paused' : '') + '">' +
+          badge(x.c, 1) +
+          '<div class="grow" onclick="editUser(\'' + x.c.id + '\',\'' + x.u.id + '\')">' +
+            '<b>' + esc(x.c.name) + '</b>' +
+            '<small><span>' + money(x.u.amount) + '</span>' + (x.deb.count > 0 ? '<span style="color:var(--bad)">' + x.deb.count + ' m: ' + x.deb.unpaid.map(monthLabel).join(', ') + '</span>' : '<span>Corte día ' + x.u.day + '</span>') + '</small>' +
+          '</div>' +
+          userChip(x.deb, x.u) +
+          '<button class="mini" onclick="ticket(\'' + x.c.id + '\',\'' + x.u.id + '\')">Ticket</button>' +
+        '</div>';
+      }).join('') +
+      '<button class="btn" style="width:100%;margin-top:10px" onclick="ticketCli(' + gi + ')"><i class="icon">receipt</i> Generar ticket consolidado</button>' +
+      remind(g) +
+    '</div>';
+  }).join('');
+}
+
+function remind(g){
+  var overdue = g.it.filter(function(x){ return !x.u.paused && x.deb.count > 0; });
+  if (!g.phone || !overdue.length) return '';
+  var t = 'Hola ' + g.name + ', te comparto tu estado de cuenta en Passly:\n' +
+    overdue.map(function(x){
+      return '• ' + x.c.name + (x.u.pfl ? ' (' + x.u.pfl + ')' : '') + ': ' + money(x.deb.debt) + ' (' + x.deb.count + ' meses: ' + x.deb.unpaid.map(monthLabel).join(', ') + ')';
+    }).join('\n') +
+    '\n\nTotal pendiente: ' + money(g.debt) + payInfo();
+  return '<a class="btn w" target="_blank" rel="noopener" style="margin-top:8px;text-decoration:none;display:flex" href="' + waLink(g.phone, t) + '"><i class="icon">chat</i> Recordar por WhatsApp</a>';
+}
+
+function sets(){
+  var s = S.settings || {};
+  return '<h1>Ajustes</h1><p>Configuración general, datos de cobro y respaldos</p>' +
+    '<div class="card" style="margin-top:16px">' +
+      '<b style="font-size:16px;display:block;margin-bottom:6px">Datos bancarios para tickets</b>' +
+      '<p>Aparecerán automáticamente en los comprobantes y mensajes de WhatsApp.</p>' +
+      '<label>Nombre del titular</label><input id="s1" value="' + esc(s.owner || '') + '" placeholder="Ej. Juan Pérez">' +
+      '<label>Banco receptor</label><input id="s2" value="' + esc(s.bank || '') + '" placeholder="Ej. BBVA / Nu / Mercado Pago">' +
+      '<label>CLABE o número de tarjeta</label><input id="s3" inputmode="numeric" value="' + esc(s.clabe || '') + '" placeholder="16 o 18 dígitos">' +
+      '<button class="btn" style="width:100%;margin-top:18px" onclick="saveSets()"><i class="icon">save</i> Guardar datos de pago</button>' +
+    '</div>' +
+    '<h2>Seguridad y respaldos</h2>' +
+    '<div class="card">' +
+      '<button class="btn g" style="width:100%;margin-bottom:10px" onclick="openVault()"><i class="icon">lock_open</i> Abrir bóveda de contraseñas</button>' +
+      '<button class="btn g" style="width:100%" onclick="backup()"><i class="icon">cloud_sync</i> Exportar o importar respaldo</button>' +
+    '</div>';
+}
+
+function saveSets(){
+  S.settings = { owner: $('#s1').value.trim(), bank: $('#s2').value.trim(), clabe: $('#s3').value.trim() };
+  save(); toast('Ajustes guardados');
+}
+
+function backup(){
+  openS('<h2>Respaldo de información</h2>' +
+    '<p>Tus datos viven exclusivamente en este dispositivo. Exporta tu respaldo para guardarlo o pasarlo a otro teléfono.</p>' +
+    '<label>Código JSON de tus datos</label><textarea id="bkText">' + esc(JSON.stringify(S)) + '</textarea>' +
+    '<div class="acts">' +
+      '<button class="btn g" onclick="copyBackup()"><i class="icon">content_copy</i> Copiar texto</button>' +
+      '<button class="btn" onclick="imp()"><i class="icon">download</i> Importar</button>' +
+    '</div><p id="msg" style="margin-top:10px"></p>');
+}
+
+function copyBackup(){
+  S.lastBackup = Date.now();
+  save();
+  copyTxt($('#bkText').value);
+  toast('Respaldo copiado y fecha registrada');
+}
+
+function imp(){
+  try {
+    var d = JSON.parse($('#bkText').value);
+    if (!d || !Array.isArray(d.accounts)) throw 0;
+    S = d;
+    S.lastBackup = Date.now();
+    save(); closeS(); render(); toast('Datos restaurados con éxito');
+  } catch (e) {
+    say('No se pudo importar. Revisa que el código esté completo.');
+  }
+}
+
+// CANVAS DRAWING ENGINE (CANVAS M3 EXPRESSIVE)
+var CL = [], CT = null, CI = 0, IMC = {};
+
+function downloadCanvas(cv, filename){
+  var link = document.createElement('a');
+  link.download = filename;
+  link.href = cv.toDataURL('image/png');
+  link.click();
+  toast('Descargando imagen');
+}
+
+function shareCanvasBlob(cv, filename, text){
+  cv.toBlob(function(b){
+    var f = new File([b], filename, { type: 'image/png' });
+    if (navigator.canShare && navigator.canShare({ files: [f] })) {
+      navigator.share({ files: [f], text: text || 'Comprobante Passly' }).catch(function(){});
+    } else {
+      downloadCanvas(cv, filename);
+    }
+  }, 'image/png');
+}
+
+function rr(x, a, b, w, h, r){
+  x.beginPath(); x.moveTo(a + r, b); x.arcTo(a + w, b, a + w, b + h, r);
+  x.arcTo(a + w, b + h, a, b + h, r); x.arcTo(a, b + h, a, b, r); x.arcTo(a, b, a + w, b, r); x.closePath();
+}
+function fit(x, t, m){
+  t = String(t); if (x.measureText(t).width <= m) return t;
+  while (t.length > 1 && x.measureText(t + '…').width > m) t = t.slice(0, -1);
+  return t + '…';
+}
+
+function drawSingleTicket(c, u, deb, pwText){
+  var W = 720, P = 44, F = "'Plus Jakarta Sans',system-ui,sans-serif";
+  var cv = document.createElement('canvas'); cv.width = W; cv.height = 1400;
+  var x = cv.getContext('2d');
+  x.fillStyle = '#0c0c0c'; x.fillRect(0, 0, W, cv.height);
+
+  x.textAlign = 'left'; x.fillStyle = '#38bdf8'; x.font = '700 22px ' + F;
+  x.fillText('PASSLY • TICKET DE SERVICIO', P, P + 36);
+
+  x.fillStyle = '#ffffff'; x.font = '800 44px ' + F;
+  x.fillText(fit(x, u.name, W - 2 * P), P, P + 96);
+
+  x.fillStyle = '#8e8e93'; x.font = '20px ' + F;
+  x.fillText(new Date().toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' }), P, P + 132);
+
+  var y = P + 164;
+  x.fillStyle = '#222222'; x.fillRect(P, y, W - 2 * P, 2); y += 32;
+
+  drawBadge(x, { logo: c.logo, name: c.name }, P, y, 64);
+  x.textAlign = 'left'; x.fillStyle = '#ffffff'; x.font = '800 30px ' + F;
+  x.fillText(fit(x, c.name, W - 2 * P - 90), P + 80, y + 34);
+
+  x.fillStyle = '#8e8e93'; x.font = '20px ' + F;
+  var pflStr = (u.pfl ? 'Perfil: ' + u.pfl : 'Perfil estándar') + (u.pin ? ' • PIN: ' + u.pin : '') + ' • Corte día ' + u.day;
+  x.fillText(fit(x, pflStr, W - 2 * P - 90), P + 80, y + 64);
+  y += 105;
+
+  x.fillStyle = '#181818'; x.fillRect(P, y, W - 2 * P, 1); y += 28;
+
+  x.textAlign = 'left'; x.fillStyle = '#8e8e93'; x.font = '22px ' + F;
+  x.fillText('Monto mensual regular', P, y + 26);
+  x.textAlign = 'right'; x.fillStyle = '#ffffff'; x.font = '700 28px ' + F;
+  x.fillText(money(u.amount), W - P, y + 26);
+
+  var isOver = deb.count > 0;
+  x.textAlign = 'left'; x.fillStyle = '#8e8e93'; x.font = '22px ' + F;
+  x.fillText('Total a liquidar hoy', P, y + 74);
+  x.textAlign = 'right'; x.fillStyle = isOver ? '#f87171' : '#34d399'; x.font = '800 34px ' + F;
+  x.fillText(isOver ? money(deb.debt) : money(u.amount), W - P, y + 74);
+
+  y += 100;
+  if (isOver) {
+    x.textAlign = 'left'; x.fillStyle = '#f87171'; x.font = '600 19px ' + F;
+    x.fillText('⚠️ Adeudo de ' + deb.count + ' meses: ' + deb.unpaid.map(monthLabel).join(', '), P, y);
+    y += 30;
+  }
+
+  if (pwText) {
+    y += 10;
+    x.fillStyle = '#161616'; rr(x, P, y, W - 2 * P, 105, 18); x.fill();
+    x.strokeStyle = '#262626'; x.lineWidth = 1; x.stroke();
+    x.textAlign = 'left'; x.fillStyle = '#38bdf8'; x.font = '700 20px ' + F;
+    x.fillText('DATOS DE ACCESO', P + 20, y + 36);
+    x.fillStyle = '#ffffff'; x.font = '20px ' + F;
+    x.fillText('Usuario: ' + (c.login || '-') + '   Contraseña: ' + pwText, P + 20, y + 74);
+    y += 135;
+  }
+
+  var pay = [];
+  var s = S.settings || {};
+  if (s.owner) pay.push('Titular: ' + s.owner);
+  if (s.bank) pay.push('Banco: ' + s.bank);
+  if (s.clabe) pay.push('CLABE o cuenta: ' + s.clabe);
+
+  if (pay.length) {
+    y += 10;
+    x.fillStyle = '#222222'; x.fillRect(P, y, W - 2 * P, 2); y += 38;
+    x.textAlign = 'left'; x.fillStyle = '#38bdf8'; x.font = '700 22px ' + F;
+    x.fillText('Datos para transferencia', P, y);
+    x.fillStyle = '#ffffff'; x.font = '22px ' + F;
+    pay.forEach(function(l){ y += 38; x.fillText(fit(x, l, W - 2 * P), P, y); });
+    y += 16;
+  }
+
+  y += 56;
+  x.textAlign = 'center'; x.fillStyle = '#8e8e93'; x.font = '19px ' + F;
+  x.fillText('Gracias por tu preferencia • Administrado con Passly', W / 2, y); y += 46;
+
+  var out = document.createElement('canvas'); out.width = W; out.height = y;
+  var q = out.getContext('2d');
+  q.fillStyle = '#0c0c0c'; q.fillRect(0, 0, W, y);
+  q.drawImage(cv, 0, 0);
+  q.strokeStyle = '#222222'; q.lineWidth = 2; rr(q, 10, 10, W - 20, y - 20, 24); q.stroke();
+  return out;
+}
+
+function saveSingleImg(){
+  var cv = drawSingleTicket(CUR_C, CUR_U, CUR_DEB, CUR_PW);
+  downloadCanvas(cv, 'ticket-' + CUR_U.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '.png');
+}
+function shareSingleImg(){
+  var cv = drawSingleTicket(CUR_C, CUR_U, CUR_DEB, CUR_PW);
+  shareCanvasBlob(cv, 'ticket-' + CUR_U.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '.png', 'Ticket de pago — Passly');
+}
+
+function drawWelcomeCard(c, u, pwText){
+  var W = 720, P = 44, F = "'Plus Jakarta Sans',system-ui,sans-serif";
+  var cv = document.createElement('canvas'); cv.width = W; cv.height = 1300;
+  var x = cv.getContext('2d');
+  x.fillStyle = '#0c0c0c'; x.fillRect(0, 0, W, cv.height);
+
+  x.textAlign = 'left'; x.fillStyle = '#38bdf8'; x.font = '700 22px ' + F;
+  x.fillText('PASSLY • BIENVENIDO AL SERVICIO', P, P + 36);
+
+  x.fillStyle = '#ffffff'; x.font = '800 44px ' + F;
+  x.fillText(fit(x, '¡Hola, ' + u.name + '!', W - 2 * P), P, P + 96);
+
+  x.fillStyle = '#8e8e93'; x.font = '20px ' + F;
+  x.fillText('Tu suscripción ha comenzado con éxito', P, P + 132);
+
+  var y = P + 164;
+  x.fillStyle = '#222222'; x.fillRect(P, y, W - 2 * P, 2); y += 32;
+
+  drawBadge(x, { logo: c.logo, name: c.name }, P, y, 64);
+  x.textAlign = 'left'; x.fillStyle = '#ffffff'; x.font = '800 30px ' + F;
+  x.fillText(fit(x, c.name, W - 2 * P - 90), P + 80, y + 34);
+
+  x.fillStyle = '#38bdf8'; x.font = '600 21px ' + F;
+  x.fillText((u.pfl ? 'Perfil: ' + u.pfl : 'Perfil asignado') + (u.pin ? ' • PIN: ' + u.pin : ''), P + 80, y + 64);
+  y += 110;
+
+  if (c.mode !== 'fam' && (c.login || pwText)) {
+    x.fillStyle = '#161616'; rr(x, P, y, W - 2 * P, 115, 20); x.fill();
+    x.strokeStyle = '#38bdf8'; x.lineWidth = 1.5; x.stroke();
+    x.textAlign = 'left'; x.fillStyle = '#38bdf8'; x.font = '700 21px ' + F;
+    x.fillText('CREDENCIALES DE ACCESO', P + 24, y + 38);
+    x.fillStyle = '#ffffff'; x.font = '21px ' + F;
+    x.fillText('Correo: ' + (c.login || '-'), P + 24, y + 72);
+    x.fillText('Contraseña: ' + (pwText || '••••••••'), P + 24, y + 100);
+    y += 140;
+  }
+
+  x.fillStyle = '#161616'; rr(x, P, y, W - 2 * P, 120, 20); x.fill();
+  x.textAlign = 'left'; x.fillStyle = '#8e8e93'; x.font = '19px ' + F;
+  x.fillText('• Mensualidad: ' + money(u.amount) + ' los días ' + u.day + ' de cada mes.', P + 24, y + 36);
+  x.fillText('• Por favor ingresa únicamente al perfil asignado para ti.', P + 24, y + 68);
+  x.fillText('• No modifiques correos, planes ni contraseñas de la cuenta.', P + 24, y + 100);
+  y += 145;
+
+  var pay = [];
+  var s = S.settings || {};
+  if (s.owner) pay.push('Titular: ' + s.owner);
+  if (s.bank) pay.push('Banco: ' + s.bank);
+  if (s.clabe) pay.push('CLABE o cuenta: ' + s.clabe);
+
+  if (pay.length) {
+    x.fillStyle = '#222222'; x.fillRect(P, y, W - 2 * P, 2); y += 38;
+    x.textAlign = 'left'; x.fillStyle = '#38bdf8'; x.font = '700 22px ' + F;
+    x.fillText('Datos para tus transferencias', P, y);
+    x.fillStyle = '#ffffff'; x.font = '22px ' + F;
+    pay.forEach(function(l){ y += 38; x.fillText(fit(x, l, W - 2 * P), P, y); });
+    y += 16;
+  }
+
+  y += 56;
+  x.textAlign = 'center'; x.fillStyle = '#8e8e93'; x.font = '19px ' + F;
+  x.fillText('¡Esperamos que lo disfrutes! • Administrado con Passly', W / 2, y); y += 46;
+
+  var out = document.createElement('canvas'); out.width = W; out.height = y;
+  var q = out.getContext('2d');
+  q.fillStyle = '#0c0c0c'; q.fillRect(0, 0, W, y);
+  q.drawImage(cv, 0, 0);
+  q.strokeStyle = '#222222'; q.lineWidth = 2; rr(q, 10, 10, W - 20, y - 20, 24); q.stroke();
+  return out;
+}
+
+function saveWelcomeImg(cid, uid, pwText){
+  var c = findAcc(cid), u = c.users.filter(function(x){ return x.id === uid; })[0];
+  var cv = drawWelcomeCard(c, u, pwText);
+  downloadCanvas(cv, 'bienvenida-' + u.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '.png');
+}
+function shareWelcomeImg(cid, uid, pwText){
+  var c = findAcc(cid), u = c.users.filter(function(x){ return x.id === uid; })[0];
+  var cv = drawWelcomeCard(c, u, pwText);
+  shareCanvasBlob(cv, 'bienvenida-' + u.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '.png', 'Bienvenido a tu cuenta — Passly');
+}
+
+function drawPwdNotice(c, pwText){
+  var W = 720, P = 44, F = "'Plus Jakarta Sans',system-ui,sans-serif";
+  var cv = document.createElement('canvas'); cv.width = W; cv.height = 1000;
+  var x = cv.getContext('2d');
+  x.fillStyle = '#0c0c0c'; x.fillRect(0, 0, W, cv.height);
+
+  x.textAlign = 'left'; x.fillStyle = '#38bdf8'; x.font = '700 22px ' + F;
+  x.fillText('PASSLY • AVISO DE SEGURIDAD', P, P + 36);
+
+  x.fillStyle = '#ffffff'; x.font = '800 42px ' + F;
+  x.fillText('Actualización de Contraseña', P, P + 96);
+
+  x.fillStyle = '#8e8e93'; x.font = '20px ' + F;
+  x.fillText('Nuevas credenciales para tu servicio', P, P + 132);
+
+  var y = P + 164;
+  x.fillStyle = '#222222'; x.fillRect(P, y, W - 2 * P, 2); y += 32;
+
+  drawBadge(x, { logo: c.logo, name: c.name }, P, y, 64);
+  x.textAlign = 'left'; x.fillStyle = '#ffffff'; x.font = '800 32px ' + F;
+  x.fillText(fit(x, c.name, W - 2 * P - 90), P + 80, y + 42);
+  y += 105;
+
+  x.fillStyle = '#161616'; rr(x, P, y, W - 2 * P, 130, 20); x.fill();
+  x.strokeStyle = '#38bdf8'; x.lineWidth = 2; x.stroke();
+
+  x.textAlign = 'left'; x.fillStyle = '#38bdf8'; x.font = '700 22px ' + F;
+  x.fillText('NUEVAS CREDENCIALES', P + 24, y + 40);
+  x.fillStyle = '#ffffff'; x.font = '22px ' + F;
+  x.fillText('👤 Correo / Usuario: ' + (c.login || '-'), P + 24, y + 78);
+  x.fillText('🔑 Nueva Contraseña: ' + (pwText || '-'), P + 24, y + 110);
+  y += 165;
+
+  x.fillStyle = '#161616'; rr(x, P, y, W - 2 * P, 110, 20); x.fill();
+  x.textAlign = 'left'; x.fillStyle = '#8e8e93'; x.font = '20px ' + F;
+  x.fillText('• Si tu dispositivo cerró la sesión, inicia con estos datos.', P + 24, y + 42);
+  x.fillText('• Tu perfil asignado y tus listas siguen sin cambios.', P + 24, y + 78);
+  y += 140;
+
+  x.textAlign = 'center'; x.fillStyle = '#8e8e93'; x.font = '19px ' + F;
+  x.fillText('Actualizado con Passly • Administrado por NextHub', W / 2, y); y += 46;
+
+  var out = document.createElement('canvas'); out.width = W; out.height = y;
+  var q = out.getContext('2d');
+  q.fillStyle = '#0c0c0c'; q.fillRect(0, 0, W, y);
+  q.drawImage(cv, 0, 0);
+  q.strokeStyle = '#222222'; q.lineWidth = 2; rr(q, 10, 10, W - 20, y - 20, 24); q.stroke();
+  return out;
+}
+
+function savePwdNoticeImg(cid, pwText){
+  var c = findAcc(cid);
+  var cv = drawPwdNotice(c, pwText);
+  downloadCanvas(cv, 'aviso-clave-' + c.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '.png');
+}
+function sharePwdNoticeImg(cid, pwText){
+  var c = findAcc(cid);
+  var cv = drawPwdNotice(c, pwText);
+  shareCanvasBlob(cv, 'aviso-clave-' + c.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '.png', 'Actualización de credenciales — ' + c.name);
+}
+
+// TICKET CONSOLIDADO POR CLIENTE
+function cliData(g){
+  var rows = g.it.map(function(x){
+    return {
+      svc: x.c.name,
+      pfl: x.u.pfl || '',
+      amt: +x.u.amount || 0,
+      debt: x.deb.debt,
+      count: x.deb.count,
+      unpaidStr: x.deb.unpaid.map(monthLabel).join(', '),
+      paused: x.u.paused,
+      logo: x.c.logo || ''
+    };
+  });
+  var s = S.settings || {};
+  return {
+    name: g.name,
+    date: new Date().toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' }),
+    rows: rows,
+    tot: g.tot,
+    debt: g.debt,
+    owner: s.owner || '',
+    bank: s.bank || '',
+    clabe: s.clabe || ''
+  };
+}
+
+function cliText(){
+  var d = CT;
+  return 'Ticket de pago — Passly\n' +
+    'Cliente: ' + d.name + '\n' +
+    'Fecha de emisión: ' + d.date + '\n\n' +
+    'Detalle de servicios:\n' +
+    d.rows.map(function(r){
+      return '• ' + r.svc + (r.pfl ? ' (' + r.pfl + ')' : '') + ': ' +
+        (r.paused ? 'Pausado' : (r.count > 0 ? money(r.debt) + ' (' + r.count + ' meses: ' + r.unpaidStr + ')' : money(r.amt) + ' (Al corriente)'));
+    }).join('\n') +
+    '\n\nTotal mensual habitual: ' + money(d.tot) +
+    '\nTotal adeudado hoy: ' + money(d.debt) +
+    payInfo();
+}
+
+function ticketCli(i){
+  var g = CL[i]; if (!g) return;
+  CT = cliData(g); CI = i; var d = CT;
+  loadIm(d, function(m){ IMC = m; });
+
+  openS('<h2>Ticket de ' + esc(d.name) + '</h2>' +
+    '<div class="tkc">' +
+      d.rows.map(function(r){
+        var badgeCls = r.paused ? 'warn' : (r.count > 0 ? 'bad' : 'ok');
+        var badgeTxt = r.paused ? 'Pausado' : (r.count > 0 ? 'Debe ' + r.count + ' m' : 'Al corriente');
+        return '<div class="tr">' +
+          badge({ logo: r.logo, name: r.svc }, 1) +
+          '<div class="grow">' +
+            '<b>' + esc(r.svc) + '</b>' +
+            '<small>' + (r.pfl ? '<span>Perfil ' + esc(r.pfl) + '</span>' : '') + (r.count > 0 ? '<span style="color:var(--bad)">' + r.unpaidStr + '</span>' : '') + '</small>' +
+          '</div>' +
+          '<div class="ta">' +
+            '<b>' + money(r.count > 0 ? r.debt : r.amt) + '</b>' +
+            '<span class="chip ' + badgeCls + '">' + badgeTxt + '</span>' +
+          '</div>' +
+        '</div>';
+      }).join('') +
+      '<div class="tt"><span>Total al mes habitual</span><b>' + money(d.tot) + '</b></div>' +
+      '<div class="tt"><span>Total adeudado</span><b style="color:' + (d.debt > 0 ? 'var(--bad)' : 'var(--ok)') + '">' + (d.debt > 0 ? money(d.debt) : 'Al corriente') + '</b></div>' +
+    '</div>' +
+    '<div class="acts">' +
+      '<button class="btn" onclick="saveImg()"><i class="icon">image</i> Guardar imagen</button>' +
+      '<button class="btn g" onclick="shareImg()"><i class="icon">share</i> Compartir</button>' +
+    '</div>' +
+    '<div class="acts">' +
+      '<button class="btn g" onclick="copyTxt(cliText())"><i class="icon">content_copy</i> Copiar texto</button>' +
+    '</div>' +
+    (g.phone ? '<a class="btn w" target="_blank" rel="noopener" style="margin-top:10px;text-decoration:none;display:flex" href="' + waLink(g.phone, cliText()) + '"><i class="icon">chat</i> Enviar por WhatsApp</a>' : ''));
+}
+
+function ticketCliFor(cid, uid){
+  var c = findAcc(cid), u = c.users.filter(function(x){ return x.id === uid; })[0];
+  var k = u.name.trim().toLowerCase(); clients();
+  var idx = CL.findIndex(function(g){ return g.name.toLowerCase() === k; });
+  if (idx >= 0) ticketCli(idx);
+}
+
+function drawTicket(d, IM){
+  IM = IM || IMC;
+  var W = 720, P = 44, F = "'Plus Jakarta Sans',system-ui,sans-serif";
+  var cv = document.createElement('canvas');
+  cv.width = W; cv.height = 1200 + d.rows.length * 105;
+  var x = cv.getContext('2d');
+
+  x.fillStyle = '#0c0c0c'; x.fillRect(0, 0, W, cv.height);
+  x.textAlign = 'left'; x.fillStyle = '#38bdf8'; x.font = '700 24px ' + F;
+  x.fillText('PASSLY • COMPROBANTE DE COBRO', P, P + 36);
+
+  x.fillStyle = '#ffffff'; x.font = '800 44px ' + F;
+  x.fillText(fit(x, d.name, W - 2 * P), P, P + 96);
+
+  x.fillStyle = '#8e8e93'; x.font = '20px ' + F;
+  x.fillText(d.date, P, P + 132);
+
+  var y = P + 164;
+  x.fillStyle = '#222222'; x.fillRect(P, y, W - 2 * P, 2); y += 18;
+
+  d.rows.forEach(function(r){
+    var st = r.paused ? 'Pausado' : (r.count > 0 ? 'Debe ' + r.count + ' meses' : 'Al corriente');
+    var stColor = r.paused ? '#fbbf24' : (r.count > 0 ? '#f87171' : '#34d399');
+    var L = P + 68;
+    drawBadge(x, r, P, y + 10, 52, IM);
+
+    x.textAlign = 'left'; x.fillStyle = '#ffffff'; x.font = '700 26px ' + F;
+    x.fillText(fit(x, r.svc, W - 2 * P - 260), L, y + 38);
+
+    x.fillStyle = '#8e8e93'; x.font = '19px ' + F;
+    var sub = r.pfl ? 'Perfil ' + r.pfl + '  ' : '';
+    if (r.count > 0) sub += 'Adeudo: ' + r.unpaidStr;
+    x.fillText(fit(x, sub, W - 2 * P - 260), L, y + 70);
+
+    x.textAlign = 'right'; x.fillStyle = '#ffffff'; x.font = '800 28px ' + F;
+    x.fillText(money(r.count > 0 ? r.debt : r.amt), W - P, y + 38);
+
+    x.fillStyle = stColor; x.font = '700 19px ' + F;
+    x.fillText(st, W - P, y + 70);
+
+    y += 100;
+    x.fillStyle = '#181818'; x.fillRect(P, y - 6, W - 2 * P, 1);
+  });
+
+  y += 24;
+  x.textAlign = 'left'; x.fillStyle = '#8e8e93'; x.font = '22px ' + F;
+  x.fillText('Total mensual regular', P, y + 26);
+  x.textAlign = 'right'; x.fillStyle = '#ffffff'; x.font = '700 28px ' + F;
+  x.fillText(money(d.tot), W - P, y + 26);
+
+  x.textAlign = 'left'; x.fillStyle = '#8e8e93'; x.font = '22px ' + F;
+  x.fillText('Total a liquidar', P, y + 74);
+  x.textAlign = 'right'; x.fillStyle = d.debt > 0 ? '#f87171' : '#34d399'; x.font = '800 34px ' + F;
+  x.fillText(d.debt > 0 ? money(d.debt) : 'Al corriente', W - P, y + 74);
+
+  y += 120;
+  var pay = [];
+  if (d.owner) pay.push('Titular: ' + d.owner);
+  if (d.bank) pay.push('Banco: ' + d.bank);
+  if (d.clabe) pay.push('CLABE o cuenta: ' + d.clabe);
+
+  if (pay.length) {
+    x.fillStyle = '#222222'; x.fillRect(P, y, W - 2 * P, 2); y += 40;
+    x.textAlign = 'left'; x.fillStyle = '#38bdf8'; x.font = '700 22px ' + F;
+    x.fillText('Datos para transferencia', P, y);
+    x.fillStyle = '#ffffff'; x.font = '22px ' + F;
+    pay.forEach(function(l){ y += 38; x.fillText(fit(x, l, W - 2 * P), P, y); });
+    y += 16;
+  }
+
+  y += 56;
+  x.textAlign = 'center'; x.fillStyle = '#8e8e93'; x.font = '19px ' + F;
+  x.fillText('Gracias por tu preferencia • Administrado con Passly', W / 2, y); y += 46;
+
+  var out = document.createElement('canvas'); out.width = W; out.height = y;
+  var q = out.getContext('2d');
+  q.fillStyle = '#0c0c0c'; q.fillRect(0, 0, W, y);
+  q.drawImage(cv, 0, 0);
+  q.strokeStyle = '#222222'; q.lineWidth = 2; rr(q, 10, 10, W - 20, y - 20, 24); q.stroke();
+  return out;
+}
+
+function fname(){
+  return 'ticket-' + CT.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'') + '.png';
+}
+function saveImg(){
+  var cv = drawTicket(CT);
+  downloadCanvas(cv, fname());
+}
+function shareImg(){
+  var cv = drawTicket(CT);
+  shareCanvasBlob(cv, fname(), 'Ticket de pago Passly');
+}
+
+// LOGOS Y MARCAS
+var SEL = '';
+var PLAT = [
+  ['netflix','Netflix','#e50914','N'],
+  ['hbo','Max','#002be7','max'],
+  ['prime','Prime Video','#00a8e1','prime'],
+  ['disney','Disney+','#113ccf','D+'],
+  ['spotify','Spotify','#1db954','S'],
+  ['youtube','YouTube','#ff0033','▶'],
+  ['apple','Apple TV+','#2c2c31','tv+'],
+  ['paramount','Paramount+','#0064ff','P+'],
+  ['crunchy','Crunchyroll','#f47521','CR'],
+  ['vix','ViX','#ff6a00','ViX'],
+  ['canva','Canva','#00a7b0','C'],
+  ['google','Google One','#4285f4','1']
+];
+
+function brand(l, n){
+  for (var i = 0; i < PLAT.length; i++) if (PLAT[i][0] === l) return { c: PLAT[i][2], t: PLAT[i][3] };
+  return { c: '#242424', t: (String(n||'?').trim().charAt(0).toUpperCase() || '?') };
+}
+
+function badge(c, sm){
+  var l = c.logo || '';
+  if (l.indexOf('data:') === 0) return '<img class="lg' + (sm ? ' sm' : '') + '" src="' + l + '" alt="">';
+  var b = brand(l, c.name);
+  return '<span class="lg' + (sm ? ' sm' : '') + '" style="background:' + b.c + '">' + esc(b.t) + '</span>';
+}
+
+function platPicker(){
+  var h = '<div class="plat">';
+  PLAT.forEach(function(p){
+    h += '<button type="button" class="pb' + (SEL === p[0] ? ' on' : '') + '" onclick="pickP(\'' + p[0] + '\')">' +
+      '<span class="lg sm" style="background:' + p[2] + '">' + esc(p[3]) + '</span>' + esc(p[1]) +
+    '</button>';
+  });
+  return h + '</div><div style="display:flex;gap:8px;margin-top:10px">' +
+    '<button type="button" class="mini" onclick="document.getElementById(\'lf\').click()">Subir logo propio</button>' +
+    '<button type="button" class="mini" onclick="pickP(\'\')">Quitar logo</button>' +
+    '<input id="lf" type="file" accept="image/*" style="display:none" onchange="upLogo(this)">' +
+  '</div>' + (SEL.indexOf('data:') === 0 ? '<p style="margin-top:6px;font-size:13px;color:var(--ok)">Logo personalizado cargado.</p>' : '');
+}
+
+function pickP(k){
+  SEL = k;
+  var btns = document.querySelectorAll('.plat .pb');
+  for (var i = 0; i < btns.length; i++) btns[i].className = 'pb' + (PLAT[i][0] === k ? ' on' : '');
+}
+
+function upLogo(inp){
+  var f = inp.files && inp.files[0]; if (!f) return;
+  var r = new FileReader();
+  r.onload = function(){
+    var im = new Image();
+    im.onload = function(){
+      var c = document.createElement('canvas'); c.width = c.height = 96;
+      var x = c.getContext('2d'), m = Math.min(im.width, im.height);
+      x.drawImage(im, (im.width - m) / 2, (im.height - m) / 2, m, m, 0, 0, 96, 96);
+      pickP(c.toDataURL('image/png')); toast('Logo personalizado listo');
+    };
+    im.src = r.result;
+  };
+  r.readAsDataURL(f);
+}
+
+function modeSw(){ var c = $('#cred'); if (c) c.style.display = $('#f12').value === 'fam' ? 'none' : ''; }
+
+function loadIm(d, cb){
+  var IM = {}, n = 0, u = [];
+  d.rows.forEach(function(r){ if (r.logo && r.logo.indexOf('data:') === 0 && u.indexOf(r.logo) < 0) u.push(r.logo); });
+  if (!u.length) { cb(IM); return; }
+  u.forEach(function(s){
+    var i = new Image();
+    i.onload = i.onerror = function(){ if (i.width) IM[s] = i; if (++n === u.length) cb(IM); };
+    i.src = s;
+  });
+}
+
+function drawBadge(x, r, px, py, s, IM){
+  var b = brand(r.logo, r.svc || r.name);
+  x.save(); rr(x, px, py, s, s, 14); x.clip();
+  if (r.logo && r.logo.indexOf('data:') === 0 && IM && IM[r.logo]) {
+    x.drawImage(IM[r.logo], px, py, s, s);
+  } else {
+    x.fillStyle = b.c; x.fillRect(px, py, s, s);
+    x.fillStyle = '#ffffff'; x.textAlign = 'center';
+    x.font = '700 ' + (b.t.length > 2 ? 17 : 24) + 'px system-ui,sans-serif';
+    x.fillText(b.t, px + s / 2, py + s / 2 + 8);
+  }
+  x.restore();
+}
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function(){
+    navigator.serviceWorker.register('./sw.js').catch(function(){});
+  });
+}
+
+render();
+</script>
+</body>
+</html>
