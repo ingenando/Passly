@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=0">
+<meta name="theme-color" content="#000000">
+<title>Passly — Gestor de Cobros</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<style>
+:root{
+  --bg: #000000;
+  --surface: #0a0a0a;
+  --surface-c: #121212;
+  --surface-high: #1a1a1a;
+  --surface-highest: #242424;
+  --line: #222222;
+  --line-subtle: #171717;
+  --tx: #f8fafc;
+  --mu: #8e8e93;
+  --primary: #38bdf8;
+  --primary-hover: #0ea5e9;
+  --primary-container: #082f49;
+  --on-primary: #000000;
+  --ok: #34d399;
+  --ok-bg: #064e3b;
+  --bad: #f87171;
+  --bad-bg: #450a0a;
+  --warn: #fbbf24;
+  --warn-bg: #451a03;
+  --mp: #009ee3;
+  color-scheme: dark;
+  box-sizing: border-box;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{background:var(--bg);scroll-padding-top:env(safe-area-inset-top,0px)}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--tx);
+  font:15px/1.45 'Plus Jakarta Sans',system-ui,-apple-system,sans-serif;
+  padding-bottom:120px;
+}
+main{max-width:580px;margin:0 auto;padding:16px 16px 24px}
+h1{font-size:26px;font-weight:800;letter-spacing:-.5px;margin:8px 0 4px;color:#fff}
+h2{font-size:19px;font-weight:700;letter-spacing:-.3px;margin:22px 0 12px;color:#fff}
+p{margin:0;color:var(--mu);font-size:14px}
+
+.banner-alert{background:var(--bad-bg);border:1px solid var(--bad);color:#fecaca;padding:14px 16px;border-radius:18px;font-size:13px;font-weight:600;margin-bottom:16px;display:flex;align-items:flex-start;gap:10px}
+.banner-warn{background:var(--warn-bg);border:1px solid var(--warn);color:#fde68a;padding:14px 16px;border-radius:18px;font-size:13px;font-weight:600;margin-bottom:16px;display:flex;align-items:flex-start;gap:10px}
+.banner-info{background:var(--primary-container);border:1px solid var(--primary);color:#bae6fd;padding:14px 16px;border-radius:18px;font-size:13px;font-weight:600;margin-bottom:16px;display:flex;align-items:flex-start;gap:10px}
+
+.top-actions{display:flex;gap:10px;margin:18px 0 20px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:9999px;padding:13px 20px;font:700 14px 'Plus Jakarta Sans',sans-serif;background:var(--primary);color:var(--on-primary);cursor:pointer;transition:all .15s ease;text-decoration:none}
+.btn:active{transform:scale(0.97);opacity:.9}
+.btn.g{background:var(--surface-high);color:var(--tx);border:1px solid var(--line)}
+.btn.d{background:var(--bad-bg);color:var(--bad);border:1px solid #7f1d1d}
+.btn.w{background:#25d366;color:#032912}
+.btn.mp{background:var(--mp);color:#fff}
+.btn.ok{background:var(--ok-bg);color:var(--ok);border:1px solid var(--ok)}
+.btn.subtle{background:transparent;border:1px solid var(--line);color:var(--mu);padding:8px 14px;border-radius:9999px;font-size:13px}
+
+.strip{display:grid;grid-template-columns:1fr 1fr 1fr;background:var(--surface-c);border:1px solid var(--line-subtle);border-radius:24px;padding:16px 8px;margin-bottom:20px}
+.strip div{text-align:center;border-right:1px solid var(--line-subtle);padding:0 4px}
+.strip div:last-child{border:0}
+.strip b{display:block;font-size:18px;font-weight:800;font-variant-numeric:tabular-nums;color:#fff}
+.strip small{color:var(--mu);font-size:12px;font-weight:600}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:24px;padding:16px;margin-bottom:16px;position:relative}
+.card-header{display:flex;align-items:center;gap:12px}
+.card-header .grow b{font-size:17px;font-weight:700}
+
+.subtabs{display:flex;gap:6px;background:var(--surface-c);padding:4px;border-radius:16px;margin:12px 0 16px;border:1px solid var(--line-subtle)}
+.subtab{flex:1;border:0;background:transparent;color:var(--mu);font:600 12px 'Plus Jakarta Sans',sans-serif;padding:9px 6px;border-radius:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;transition:all .15s ease}
+.subtab.on{background:var(--surface-high);color:var(--primary);border:1px solid var(--line)}
+
+.filter-bar{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;margin-bottom:14px;scrollbar-width:none}
+.filter-bar::-webkit-scrollbar{display:none}
+.f-pill{flex:none;border:1px solid var(--line);background:var(--surface-c);color:var(--mu);border-radius:9999px;padding:7px 14px;font:600 12px 'Plus Jakarta Sans',sans-serif;cursor:pointer}
+.f-pill.on{background:var(--primary-container);border-color:var(--primary);color:var(--primary)}
+
+.row{display:flex;flex-wrap:wrap;align-items:center;gap:10px;background:var(--surface-c);border:1px solid var(--line-subtle);border-radius:18px;padding:12px;margin-bottom:8px}
+.row.paused{opacity:.65;border-style:dashed}
+.grow{flex:1 1 100%;min-width:0;cursor:pointer;margin-bottom:4px}
+@media (min-width: 480px){ .grow{flex:1;margin-bottom:0;} }
+.grow b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:15px}
+.grow small{color:var(--mu);font-size:13px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:2px}
+.row-actions{display:flex;align-items:center;gap:8px;width:100%;justify-content:flex-start}
+@media (min-width: 480px){ .row-actions{width:auto;justify-content:flex-end;} }
+
+.chip{font-size:11px;font-weight:700;padding:4px 10px;border-radius:9999px;background:var(--surface-high);color:var(--mu);white-space:nowrap;display:inline-flex;align-items:center;gap:4px}
+.chip.ok{background:var(--ok-bg);color:var(--ok)}
+.chip.bad{background:var(--bad-bg);color:var(--bad)}
+.chip.warn{background:var(--warn-bg);color:var(--warn)}
+.chip.info{background:var(--primary-container);color:var(--primary)}
+
+.mini{border:1px solid var(--line);background:var(--surface-high);color:var(--tx);border-radius:9999px;padding:7px 12px;font:600 12px 'Plus Jakarta Sans',sans-serif;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;gap:4px}
+.mini:active{transform:scale(0.96)}
+.mini.d{border-color:#7f1d1d;color:var(--bad);background:var(--bad-bg)}
+.mini.ok{border-color:var(--ok);color:var(--ok);background:var(--ok-bg)}
+.mini.primary{border-color:var(--primary);color:var(--on-primary);background:var(--primary)}
+
+.add{width:100%;border:1px dashed var(--line);background:var(--surface-c);color:var(--primary);border-radius:16px;padding:12px;font:600 13px 'Plus Jakarta Sans',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;margin-top:6px}
+.empty{background:var(--surface);border:1px solid var(--line);border-radius:24px;padding:32px 20px;text-align:center}
+.empty p{margin-bottom:16px}
+
+nav {
+  position: fixed;left: 50%;transform: translateX(-50%);bottom: 24px;
+  width: calc(100% - 32px);max-width: 360px;
+  background: rgba(18, 18, 18, 0.88);backdrop-filter: blur(16px);-webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--line);border-radius: 9999px;
+  display: flex;justify-content: space-between;padding: 6px;z-index: 40;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+}
+.nav-btn {
+  display: flex;align-items: center;justify-content: center;gap: 6px;
+  padding: 10px 16px;border-radius: 9999px;border: 0;background: transparent;
+  color: var(--mu);font: 700 14px 'Plus Jakarta Sans', sans-serif;cursor: pointer;
+  transition: all .25s ease;position:relative;
+}
+.nav-btn .txt { display: none; }
+.nav-btn.on { background: var(--primary-container); color: var(--primary); }
+.nav-btn.on .txt { display: block; color: var(--primary); }
+.badge-dot{position:absolute;top:6px;right:10px;width:8px;height:8px;border-radius:50%;background:var(--bad)}
+
+#sheet{position:fixed;inset:0;display:none;z-index:50}
+#sheet.on{display:block}
+.bk{position:absolute;inset:0;background:rgba(0,0,0,0.85);backdrop-filter:blur(4px)}
+.pan{position:absolute;left:0;right:0;bottom:0;margin:auto;max-width:580px;max-height:90%;overflow-y:auto;background:var(--surface);border:1px solid var(--line);border-radius:28px 28px 0 0;padding:24px 20px calc(24px + env(safe-area-inset-bottom,0px))}
+
+label{display:block;color:var(--mu);font-size:13px;font-weight:600;margin:14px 0 6px}
+input,textarea,select{width:100%;background:var(--surface-c);color:var(--tx);border:1px solid var(--line);border-radius:16px;padding:13px 14px;font:15px 'Plus Jakarta Sans',sans-serif;outline:none;transition:border-color .15s}
+input:focus,textarea:focus,select:focus{border-color:var(--primary)}
+textarea{height:110px;font:13px ui-monospace,monospace}
+.inp-eye{display:flex;gap:8px;align-items:center}
+.inp-eye input{flex:1}
+.eye-btn{border:1px solid var(--line);background:var(--surface-high);color:var(--mu);border-radius:14px;width:46px;height:46px;flex:none;display:grid;place-items:center;cursor:pointer}
+.acts{display:flex;gap:10px;margin-top:20px}
+.acts .btn{flex:1}
+
+.vault{background:var(--surface-c);border:1px solid var(--line-subtle);border-radius:18px;padding:12px;margin:0 0 12px;display:flex;flex-direction:column;gap:8px;font-size:13px}
+.vr{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.vr code{font-family:ui-monospace,monospace;color:var(--primary);font-size:14px}
+.lg{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;font:700 15px 'Plus Jakarta Sans',sans-serif;color:#fff;flex:none;object-fit:cover}
+.lg.sm{width:34px;height:34px;border-radius:10px;font-size:13px}
+.plat{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.pb{display:flex;align-items:center;gap:8px;background:var(--surface-c);border:1px solid var(--line);color:var(--tx);border-radius:14px;padding:8px 10px;font:600 13px 'Plus Jakarta Sans',sans-serif;cursor:pointer;text-align:left}
+.pb.on{border-color:var(--primary);background:var(--primary-container);color:#fff}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:110px;background:var(--surface-highest);color:#fff;border:1px solid var(--line);padding:10px 18px;border-radius:9999px;z-index:90;font-size:13px;font-weight:600;box-shadow:0 10px 30px rgba(0,0,0,0.6)}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.chk{display:flex;align-items:center;gap:10px;font-size:14px;margin-top:14px;cursor:pointer;color:var(--tx)}
+.chk input{width:auto}
+.tkc{background:var(--surface-c);border:1px solid var(--line);border-radius:22px;padding:10px 16px;margin:14px 0 8px}
+.tr{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--line-subtle)}
+.tr:last-child{border:0}
+.ta{text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:3px}
+.tt{display:flex;justify-content:space-between;align-items:center;padding:8px 0}
+.tt span{color:var(--mu);font-size:14px}
+.tt b{font-size:16px;font-variant-numeric:tabular-nums;color:#fff}
+.tt.total{border-top:1px solid var(--line);margin-top:6px;padding-top:12px}
+.tt.total b{font-size:20px}
+.icon{font-family:'Material Symbols Rounded',sans-serif;font-style:normal;vertical-align:middle;line-height:1}
+.top-logo-container { display:flex; justify-content:center; align-items:center; padding: 8px 0 20px; }
+.top-logo-img { height: 46px; border-radius: 12px; object-fit: contain; }
+
+/* LOGIN ESTILO GOOGLE */
+.g-wrap{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 16px}
+.g-card{width:100%;max-width:420px;background:#111111;border:1px solid #262626;border-radius:28px;padding:36px 28px 28px;box-shadow:0 20px 60px rgba(0,0,0,0.7)}
+.g-logo{display:flex;justify-content:center;margin-bottom:18px}
+.g-logo img{height:44px;border-radius:10px}
+.g-title{text-align:center;font-size:24px;font-weight:700;color:#fff;margin:0 0 6px}
+.g-sub{text-align:center;font-size:14px;color:var(--mu);margin:0 0 26px}
+.g-pill{display:inline-flex;align-items:center;gap:8px;margin:0 auto 22px;padding:6px 14px 6px 8px;background:#1a1a1a;border:1px solid #2c2c2e;border-radius:9999px;color:#e2e8f0;font-size:13px;font-weight:600;cursor:pointer}
+.g-pill-wrap{display:flex;justify-content:center}
+.g-field{position:relative;margin-bottom:14px}
+.g-field input{width:100%;background:#0a0a0a;border:1px solid #333;border-radius:12px;padding:15px 16px;font-size:15px;color:#fff}
+.g-field input:focus{border-color:#8ab4f8;box-shadow:0 0 0 1px #8ab4f8}
+.g-actions{display:flex;align-items:center;justify-content:space-between;margin-top:28px;gap:10px}
+.g-btn{background:#8ab4f8;color:#062e6f;border:0;border-radius:9999px;padding:11px 24px;font:700 14px 'Plus Jakarta Sans',sans-serif;cursor:pointer}
+.g-link{background:transparent;border:0;color:#8ab4f8;font:600 14px 'Plus Jakarta Sans',sans-serif;padding:8px 10px;border-radius:8px;cursor:pointer}
+.g-err{color:var(--bad);font-size:13px;margin-top:10px;display:flex;align-items:center;gap:6px}
+.g-foot{margin-top:20px;font-size:12px;color:var(--mu);text-align:center}
+</style>
+</head>
+<body>
+<div id="storageAlert"></div>
+<main id="app"></main>
+<nav id="mainNav" style="display:none">
+<button class="nav-btn" id="n1" onclick="go('home')"><i class="icon">home</i><span class="txt">Inicio</span><span class="badge-dot" id="reqDot" style="display:none"></span></button>
+<button class="nav-btn" id="n2" onclick="go('accts')"><i class="icon">dataset</i><span class="txt">Cuentas</span></button>
+<button class="nav-btn" id="n3" onclick="go('clients')"><i class="icon">group</i><span class="txt">Clientes</span></button>
+<button class="nav-btn" id="n4" onclick="go('sets')"><i class="icon">settings</i><span class="txt">Ajustes</span></button>
+</nav>
+<div id="sheet"></div>
+
+<script>
+/* =========================================================
+   CONFIGURACIÓN DE FIREBASE
+   ========================================================= */
+var FIREBASE_CONFIG = {
+  apiKey: "AIzaSyDTzO8PRSn4v0t5CCoLD3sV9qWGb8ULImo",
+  authDomain: "pay-e73e8.firebaseapp.com",
+  projectId: "pay-e73e8",
+  storageBucket: "pay-e73e8.firebasestorage.app",
+  messagingSenderId: "331853869208",
+  appId: "1:331853869208:web:c88f136b13ee533bd3a0ed"
+};
+var ADMIN_UID = "x4XlJ47x3Kbck9eSM6TQKCmU3zj2";
+/* ========================================================= */
+
+var KEY = 'subs-v1', S = { accounts: [], settings: {}, lastBackup: null, portalMap: {}, clientTags: {} }, view = 'home';
+var ACC_EXP = {}, ACC_TAB = {}, CLI_FILTER = 'all';
+var FB_READY = false, auth = null, db = null, CUR_USER = null, USER_ROLE = null;
+var LOGIN_STEP = 1, LOGIN_EMAIL = '', LOGIN_ERR = '';
+var PORTAL_DATA = null, PORTAL_TAB = 'services', CATALOG_DATA = [], CLIENT_REQS = [];
+var ADMIN_REQS = [], unsubReqs = null;
+
+if (FIREBASE_CONFIG.apiKey && window.firebase) {
+  try {
+    firebase.initializeApp(FIREBASE_CONFIG);
+    auth = firebase.auth();
+    db = firebase.firestore();
+    FB_READY = true;
+  } catch (e) { console.error(e); }
+}
+
+if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(function(){});
+try { var raw = localStorage.getItem(KEY); if (raw) S = JSON.parse(raw); } catch(e) {}
+if (!S.portalMap) S.portalMap = {};
+if (!S.clientTags) S.clientTags = {};
+
+var syncTimer = null;
+function save() {
+  try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e) {}
+  if (FB_READY && USER_ROLE === 'admin' && db) {
+    if (syncTimer) clearTimeout(syncTimer);
+    syncTimer = setTimeout(function(){
+      db.collection('admin').doc('datos').set(S).catch(function(e){ console.error('Sync error:', e); });
+      syncCatalog();
+    }, 600);
+  }
+}
+
+function syncCatalog(){
+  if (!FB_READY || USER_ROLE !== 'admin' || !db) return;
+  var items = [];
+  S.accounts.forEach(function(c){
+    var free = (c.slots || 4) - (c.users ? c.users.length : 0);
+    if (free > 0 && c.hideCatalog !== true) {
+      var price = +c.catalogPrice || 0;
+      if (!price && c.users && c.users.length) price = +c.users[0].amount || 0;
+      if (!price && c.cost) price = Math.ceil((+c.cost || 0) / (c.slots || 4));
+      items.push({ id: c.id, name: c.name, logo: c.logo || '', price: price, free: free, mode: c.mode || 'cred' });
+    }
+  });
+  db.collection('catalog').doc('public').set({
+    items: items,
+    mpLink: (S.settings && S.settings.mpLink) || '',
+    adminWa: (S.settings && S.settings.adminWa) || '',
+    updatedAt: Date.now()
+  }).catch(function(e){ console.error('Catalog sync error:', e); });
+}
+
+var $ = function(s){ return document.querySelector(s); };
+function uid(){ return Math.random().toString(36).slice(2,9); }
+function esc(s){ return String(s||'').replace(/[&<>"]/g, function(c){ return {'&':'&','<':'<','>':'>','"':'"'}[c]; }); }
+function money(n){ return '$' + (+n||0).toLocaleString('es-MX', { maximumFractionDigits: 2 }); }
+function today(){ var d = new Date(); d.setHours(0,0,0,0); return d; }
+function mk(d){ var m = d.getMonth() + 1; return d.getFullYear() + '-' + (m < 10 ? '0' : '') + m; }
+function fmt(d){ return d.toLocaleDateString('es-MX', { day: 'numeric', month: 'short' }); }
+function monthLabel(mStr){ if (!mStr) return ''; var p = mStr.split('-').map(Number); return new Date(p[0], p[1] - 1, 1).toLocaleDateString('es-MX', { month: 'short' }); }
+function monthLabelFull(mStr){ if (!mStr) return ''; var p = mStr.split('-').map(Number); return new Date(p[0], p[1] - 1, 1).toLocaleDateString('es-MX', { month: 'long', year: 'numeric' }); }
+function dueDate(y, m, day){ var last = new Date(y, m + 1, 0).getDate(); return new Date(y, m, Math.min(day, last)); }
+function getMonthList(startM, endM){
+  var res = []; if (!startM) return res;
+  var s = startM.split('-').map(Number), e = endM.split('-').map(Number), y = s[0], m = s[1];
+  while (y < e[0] || (y === e[0] && m <= e[1])) { res.push(y + '-' + (m < 10 ? '0' : '') + m); m++; if (m > 12) { m = 1; y++; } }
+  return res;
+}
+function vib(ms){ if (navigator.vibrate) navigator.vibrate(ms || 35); }
+function toggleInp(id, btn){ var el = document.getElementById(id); if (!el) return; var show = el.type === 'password'; el.type = show ? 'text' : 'password'; btn.innerHTML = '<i class="icon" style="font-size:20px">' + (show ? 'visibility_off' : 'visibility') + '</i>'; }
+function appLogo() { return '<div class="top-logo-container"><img src="logo.png" class="top-logo-img" alt="Passly" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'block\';"><h1 style="display:none;margin:0;font-size:28px;">Passly</h1></div>'; }
+
+/* =========================================================
+   LOGIN ESTILO GOOGLE
+   ========================================================= */
+function renderLogin(){
+  $('#mainNav').style.display = 'none';
+  document.body.style.paddingBottom = '24px';
+  var errHtml = LOGIN_ERR ? '<div class="g-err"><i class="icon" style="font-size:18px">error</i><span>' + esc(LOGIN_ERR) + '</span></div>' : '';
+  var inner = LOGIN_STEP === 1 ?
+    '<h1 class="g-title">Iniciar sesión</h1><p class="g-sub">Usa tu cuenta de Passly</p>' +
+    '<div class="g-field"><input id="lgEmail" type="email" autocomplete="username" placeholder="Correo electrónico" value="' + esc(LOGIN_EMAIL) + '" onkeydown="if(event.key===\'Enter\')loginNext()"></div>' +
+    errHtml + '<div class="g-actions"><span></span><button class="g-btn" onclick="loginNext()">Siguiente</button></div>'
+    :
+    '<h1 class="g-title">Te damos la bienvenida</h1>' +
+    '<div class="g-pill-wrap"><button class="g-pill" onclick="LOGIN_STEP=1;LOGIN_ERR=\'\';renderLogin()"><i class="icon" style="font-size:18px;color:#8ab4f8">account_circle</i><span>' + esc(LOGIN_EMAIL) + '</span><i class="icon" style="font-size:16px">expand_more</i></button></div>' +
+    '<div class="g-field inp-eye"><input id="lgPass" type="password" autocomplete="current-password" placeholder="Ingresa tu contraseña" onkeydown="if(event.key===\'Enter\')doLogin()"><button class="eye-btn" type="button" onclick="toggleInp(\'lgPass\', this)"><i class="icon" style="font-size:20px">visibility</i></button></div>' +
+    errHtml + '<div class="g-actions"><button class="g-link" onclick="LOGIN_STEP=1;LOGIN_ERR=\'\';renderLogin()">Atrás</button><button class="g-btn" id="btnDoLogin" onclick="doLogin()">Iniciar sesión</button></div>';
+
+  $('#app').innerHTML = '<div class="g-wrap"><div class="g-card"><div class="g-logo"><img src="logo.png" alt="Passly" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'block\'"><b style="display:none;font-size:24px;color:#fff">Passly</b></div>' + inner + '</div><div class="g-foot">Conexión segura con Firebase • Passly v5.0</div></div>';
+  setTimeout(function(){ var f = $(LOGIN_STEP === 1 ? '#lgEmail' : '#lgPass'); if (f) f.focus(); }, 60);
+}
+function loginNext(){ var e = ($('#lgEmail').value || '').trim(); if (!e || e.indexOf('@') === -1) { LOGIN_ERR = 'Ingresa un correo electrónico válido.'; renderLogin(); return; } LOGIN_EMAIL = e; LOGIN_ERR = ''; LOGIN_STEP = 2; renderLogin(); }
+async function doLogin(){
+  var p = ($('#lgPass').value || ''); if (!p) { LOGIN_ERR = 'Ingresa tu contraseña.'; renderLogin(); return; }
+  var btn = $('#btnDoLogin'); if (btn) { btn.disabled = true; btn.textContent = 'Verificando...'; }
+  try { await auth.signInWithEmailAndPassword(LOGIN_EMAIL, p); LOGIN_ERR = ''; }
+  catch (e) { LOGIN_ERR = 'Correo o contraseña incorrectos.'; renderLogin(); }
+}
+function doLogout(){
+  if (unsubReqs) { unsubReqs(); unsubReqs = null; }
+  if (FB_READY && auth) auth.signOut();
+  CUR_USER = null; USER_ROLE = null; PORTAL_DATA = null; LOGIN_STEP = 1; LOGIN_ERR = '';
+  renderLogin();
+}
+
+/* =========================================================
+   PORTAL DEL CLIENTE v5.0
+   ========================================================= */
+function renderClientPortal(){
+  $('#mainNav').style.display = 'none';
+  document.body.style.paddingBottom = '40px';
+  var d = PORTAL_DATA;
+  if (!d) {
+    $('#app').innerHTML = appLogo() +
+      '<div class="card" style="text-align:center;padding:32px 20px">' +
+        '<i class="icon" style="font-size:44px;color:var(--primary);margin-bottom:10px">hourglass_empty</i>' +
+        '<h2 style="margin:0 0 8px">Tu portal se está preparando</h2>' +
+        '<p>Tu administrador aún no ha publicado tus servicios en este perfil.</p>' +
+        '<button class="btn g" style="margin-top:20px" onclick="doLogout()"><i class="icon">logout</i> Cerrar sesión</button>' +
+      '</div>';
+    return;
+  }
+
+  var curMonthName = monthLabel(mk(today()));
+  var pendingPayReq = CLIENT_REQS.find(function(r){ return r.type === 'payment' && r.status === 'pending'; });
+  var tagChip = d.tag === 'prueba' ? '<span class="chip info">Cuenta de prueba</span>' : (d.tag === 'vip' ? '<span class="chip ok">VIP</span>' : '');
+
+  var alertBanner = '';
+  if (pendingPayReq) {
+    alertBanner = '<div class="banner-info"><i class="icon">schedule</i><div><b>Pago en revisión (' + money(pendingPayReq.amount) + ')</b><br><span style="font-weight:400">Ref: ' + esc(pendingPayReq.reference || 'Sin ref') + ' • En cuanto el administrador lo verifique, tu saldo se actualizará.</span></div></div>';
+  } else if (d.pastDebt > 0) {
+    var owedSvcs = d.rows.filter(function(r){ return !r.isUpToDate; }).map(function(r){ return r.svc + ' (' + money(r.totalPay) + ')'; }).join(', ');
+    alertBanner = '<div class="banner-alert"><i class="icon">warning</i><div><b>Tienes pagos atrasados: ' + money(d.totalPay) + '</b><br><span style="font-weight:400">Pendiente: ' + esc(owedSvcs) + '. Evita la suspensión de tus accesos.</span></div></div>';
+  } else if (d.totalPay > 0) {
+    var curSvcs = d.rows.filter(function(r){ return !r.isUpToDate; }).map(function(r){ return r.svc + ' (' + money(r.totalPay) + ')'; }).join(', ');
+    alertBanner = '<div class="banner-warn"><i class="icon">notifications_active</i><div><b>Tienes pago pendiente este ciclo: ' + money(d.totalPay) + '</b><br><span style="font-weight:400">Servicios: ' + esc(curSvcs) + '</span></div></div>';
+  }
+
+  var h = appLogo() +
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">' +
+      '<div><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><h1 style="margin:0;font-size:24px">Hola, ' + esc(d.name) + '</h1>' + tagChip + '</div><p>Tu estado de cuenta y servicios</p></div>' +
+      '<button class="btn subtle" onclick="doLogout()"><i class="icon" style="font-size:16px">logout</i> Salir</button>' +
+    '</div>' +
+    alertBanner +
+    '<div class="strip">' +
+      '<div><b style="color:' + (d.pastDebt > 0 ? 'var(--bad)' : 'var(--mu)') + '">' + money(d.pastDebt) + '</b><small>Saldo anterior</small></div>' +
+      '<div><b>' + money(d.curDue) + '</b><small>Ciclo ' + curMonthName + '</small></div>' +
+      '<div><b style="color:' + (d.totalPay > 0 ? 'var(--primary)' : 'var(--ok)') + '">' + (d.totalPay > 0 ? money(d.totalPay) : '$0') + '</b><small>' + (d.totalPay > 0 ? 'Total a pagar' : 'Al corriente') + '</small></div>' +
+    '</div>' +
+    '<div class="subtabs">' +
+      '<button class="subtab ' + (PORTAL_TAB === 'services' ? 'on' : '') + '" onclick="PORTAL_TAB=\'services\';renderClientPortal()"><i class="icon" style="font-size:16px">live_tv</i> Servicios</button>' +
+      '<button class="subtab ' + (PORTAL_TAB === 'payments' ? 'on' : '') + '" onclick="PORTAL_TAB=\'payments\';renderClientPortal()"><i class="icon" style="font-size:16px">payments</i> Pagos</button>' +
+      '<button class="subtab ' + (PORTAL_TAB === 'catalog' ? 'on' : '') + '" onclick="PORTAL_TAB=\'catalog\';renderClientPortal()"><i class="icon" style="font-size:16px">add_shopping_cart</i> Solicitar</button>' +
+    '</div>';
+
+  if (PORTAL_TAB === 'services') {
+    h += d.rows.map(function(r, idx){
+      var credHtml = '';
+      if (r.mode !== 'fam' && (r.login || r.pw)) {
+        credHtml = '<div class="vault" style="margin:10px 0 0">' +
+          (r.login ? '<div class="vr"><span>👤 <code>' + esc(r.login) + '</code></span><button class="mini" onclick="copyTxt(decodeURIComponent(\'' + encodeURIComponent(r.login) + '\'))">Copiar</button></div>' : '') +
+          (r.pw ? '<div class="vr"><span>🔑 <code id="cpw-' + idx + '">••••••••</code></span><span><button class="mini" onclick="toggleClientPw(' + idx + ',\'' + encodeURIComponent(r.pw) + '\')">Ver</button> <button class="mini" onclick="copyTxt(decodeURIComponent(\'' + encodeURIComponent(r.pw) + '\'))">Copiar</button></span></div>' : '') +
+        '</div>';
+      }
+      return '<div class="card">' +
+        '<div class="card-header">' + badge({ logo: r.logo, name: r.svc }) +
+          '<div class="grow"><b>' + esc(r.svc) + '</b><small>' + (r.pfl ? '<span>Perfil: ' + esc(r.pfl) + (r.pin ? ' • PIN ' + esc(r.pin) : '') + '</span>' : '') + '<span>' + esc(r.statusText) + '</span></small></div>' +
+          '<div class="ta"><b>' + (r.isUpToDate ? '$0' : money(r.totalPay)) + '</b><span class="chip ' + r.badgeCls + '">' + esc(r.shortStatus) + '</span></div>' +
+        '</div>' + credHtml +
+      '</div>';
+    }).join('');
+  } else if (PORTAL_TAB === 'payments') {
+    h += '<div class="card"><h2 style="margin:0 0 12px">Próximos pagos</h2>' +
+      d.rows.map(function(r){
+        return '<div class="tr">' + badge({ logo: r.logo, name: r.svc }, 1) +
+          '<div class="grow"><b>' + esc(r.svc) + '</b><small><span>Mensualidad: ' + money(r.amt) + '</span><span>Próximo corte: ' + esc(r.nextCycleText || '-') + '</span></small></div>' +
+          '<span class="chip ' + r.badgeCls + '">' + esc(r.shortStatus) + '</span>' +
+        '</div>';
+      }).join('') +
+    '</div>';
+
+    h += '<div class="card"><h2 style="margin:0 0 12px">Opciones para pagar</h2>';
+    if (d.mpLink) {
+      h += '<a class="btn mp" style="width:100%;margin-bottom:10px" target="_blank" rel="noopener" href="' + esc(d.mpLink) + '"><i class="icon">credit_card</i> Pagar con Mercado Pago</a>';
+    }
+    if (d.owner || d.bank || d.clabe) {
+      h += '<div class="tkc" style="margin-bottom:14px">' +
+        (d.owner ? '<div class="tt"><span>Titular</span><b>' + esc(d.owner) + '</b></div>' : '') +
+        (d.bank ? '<div class="tt"><span>Banco</span><b>' + esc(d.bank) + '</b></div>' : '') +
+        (d.clabe ? '<div class="tt"><span>CLABE / Cuenta</span><span style="display:flex;align-items:center;gap:8px"><b>' + esc(d.clabe) + '</b><button class="mini" onclick="copyTxt(\'' + esc(d.clabe) + '\')">Copiar</button></span></div>' : '') +
+      '</div>';
+    }
+    h += '<button class="btn ok" style="width:100%" onclick="openReportPayment()"><i class="icon">check_circle</i> Ya pagué (Enviar comprobante / referencia)</button>';
+    if (d.adminWa) {
+      h += '<a class="btn w" style="width:100%;margin-top:10px" target="_blank" rel="noopener" href="' + waLink(d.adminWa, 'Hola, soy ' + d.name + ', te escribo desde mi portal de Passly.') + '"><i class="icon">chat</i> Contactar administrador por WhatsApp</a>';
+    }
+    h += '</div>';
+
+    var payReqs = CLIENT_REQS.filter(function(r){ return r.type === 'payment'; });
+    if (payReqs.length) {
+      h += '<h2>Historial de reportes</h2>' + payReqs.map(function(r){
+        var st = r.status === 'approved' ? '<span class="chip ok">Verificado</span>' : (r.status === 'rejected' ? '<span class="chip bad">Rechazado</span>' : '<span class="chip warn">En revisión</span>');
+        return '<div class="row"><div class="grow"><b>Pago reportado: ' + money(r.amount) + '</b><small><span>' + esc(r.method || 'Transferencia') + '</span><span>Ref: ' + esc(r.reference || '-') + '</span></small></div>' + st + '</div>';
+      }).join('');
+    }
+  } else if (PORTAL_TAB === 'catalog') {
+    h += '<p style="margin-bottom:14px">Servicios con lugares disponibles. Solicita el que quieras y en cuanto el administrador verifique tu pago se activará aquí.</p>';
+    if (!CATALOG_DATA.length) {
+      h += '<div class="empty"><p>Por ahora no hay lugares disponibles en el catálogo.</p></div>';
+    } else {
+      h += CATALOG_DATA.map(function(it){
+        return '<div class="card"><div class="card-header">' + badge({ logo: it.logo, name: it.name }) +
+          '<div class="grow"><b>' + esc(it.name) + '</b><small><span>' + money(it.price) + '/mes</span><span style="color:var(--ok)">' + it.free + ' ' + (it.free === 1 ? 'lugar libre' : 'lugares libres') + '</span></small></div>' +
+          '<button class="mini primary" onclick="openRequestService(\'' + esc(it.id) + '\',\'' + esc(it.name) + '\',' + (+it.price || 0) + ')">Solicitar</button>' +
+        '</div></div>';
+      }).join('');
+    }
+    var svcReqs = CLIENT_REQS.filter(function(r){ return r.type === 'service'; });
+    if (svcReqs.length) {
+      h += '<h2>Mis solicitudes</h2>' + svcReqs.map(function(r){
+        var st = r.status === 'approved' ? '<span class="chip ok">Aprobado</span>' : (r.status === 'rejected' ? '<span class="chip bad">No disponible</span>' : '<span class="chip warn">Pendiente</span>');
+        return '<div class="row"><div class="grow"><b>' + esc(r.serviceName) + ' (' + money(r.price) + '/mes)</b><small><span>' + esc(r.note || 'Sin comentarios') + '</span></small></div>' + st + '</div>';
+      }).join('');
+    }
+  }
+  $('#app').innerHTML = h;
+}
+
+function toggleClientPw(idx, encPw){ var el = $('#cpw-' + idx); if (!el) return; if (el.dataset.v) { el.textContent = '••••••••'; delete el.dataset.v; } else { el.textContent = decodeURIComponent(encPw); el.dataset.v = '1'; } }
+
+function openReportPayment(){
+  var d = PORTAL_DATA;
+  openS('<h2>Reportar pago</h2><p>Avisa al administrador que ya realizaste tu pago para que lo verifique.</p>' +
+    '<label>Monto pagado</label><input id="rpAmt" type="number" inputmode="decimal" value="' + (d.totalPay || d.tot || '') + '">' +
+    '<label>Método de pago</label><select id="rpMethod"><option value="Mercado Pago">Mercado Pago</option><option value="Transferencia SPEI">Transferencia SPEI</option><option value="Efectivo">Efectivo</option></select>' +
+    '<label>Clave de rastreo / Referencia / Nombre</label><input id="rpRef" placeholder="Ej. Últimos 4 dígitos o folio MP">' +
+    '<div class="acts"><button class="btn g" onclick="closeS()">Cancelar</button><button class="btn ok" onclick="submitPaymentReport()">Enviar aviso</button></div>');
+}
+async function submitPaymentReport(){
+  var amt = parseFloat($('#rpAmt').value) || 0, method = $('#rpMethod').value, ref = ($('#rpRef').value || '').trim();
+  if (!amt) { toast('Escribe el monto pagado'); return; }
+  try {
+    await db.collection('requests').add({
+      type: 'payment', status: 'pending', uid: CUR_USER.uid, clientName: PORTAL_DATA.name,
+      amount: amt, method: method, reference: ref, createdAt: Date.now()
+    });
+    closeS(); toast('Aviso enviado. Tu pago está en revisión.');
+    await loadClientReqs(); renderClientPortal();
+  } catch (e) { toast('Error al enviar reporte'); }
+}
+
+function openRequestService(cid, name, price){
+  openS('<h2>Solicitar ' + esc(name) + '</h2><p>Mensualidad estimada: <b>' + money(price) + '</b>. El administrador revisará tu solicitud y te contactará para activar el acceso.</p>' +
+    '<label>Nombre de perfil deseado o nota (opcional)</label><input id="rsNote" placeholder="Ej. Perfil Juan, PIN 1234">' +
+    '<div class="acts"><button class="btn g" onclick="closeS()">Cancelar</button><button class="btn" onclick="submitServiceReq(\'' + esc(cid) + '\',\'' + esc(name) + '\',' + price + ')">Enviar solicitud</button></div>');
+}
+async function submitServiceReq(cid, name, price){
+  var note = ($('#rsNote').value || '').trim();
+  try {
+    await db.collection('requests').add({
+      type: 'service', status: 'pending', uid: CUR_USER.uid, clientName: PORTAL_DATA.name,
+      accountId: cid, serviceName: name, price: price, note: note, createdAt: Date.now()
+    });
+    closeS(); toast('Solicitud enviada al administrador');
+    await loadClientReqs(); renderClientPortal();
+  } catch (e) { toast('Error al enviar solicitud'); }
+}
+
+async function loadClientReqs(){
+  if (!CUR_USER || !db) return;
+  try {
+    var snap = await db.collection('requests').where('uid', '==', CUR_USER.uid).get();
+    CLIENT_REQS = snap.docs.map(function(doc){ return Object.assign({ id: doc.id }, doc.data()); }).sort(function(a,b){ return (b.createdAt||0) - (a.createdAt||0); });
+  } catch (e) { CLIENT_REQS = []; }
+}
+
+/* =========================================================
+   ADMIN: BANDEJA DE VERIFICACIÓN Y SOLICITUDES
+   ========================================================= */
+function startAdminReqListener(){
+  if (unsubReqs) unsubReqs();
+  unsubReqs = db.collection('requests').where('status', '==', 'pending').onSnapshot(function(snap){
+    ADMIN_REQS = snap.docs.map(function(doc){ return Object.assign({ id: doc.id }, doc.data()); }).sort(function(a,b){ return (b.createdAt||0) - (a.createdAt||0); });
+    var dot = $('#reqDot'); if (dot) dot.style.display = ADMIN_REQS.length ? 'block' : 'none';
+    if (view === 'home') render();
+  }, function(e){ console.error(e); });
+}
+
+function adminReqBlock(){
+  if (!ADMIN_REQS.length) return '';
+  return '<h2>Solicitudes y pagos por verificar (' + ADMIN_REQS.length + ')</h2>' +
+    ADMIN_REQS.map(function(r){
+      if (r.type === 'payment') {
+        return '<div class="card" style="border-color:var(--warn)">' +
+          '<div class="card-header"><i class="icon" style="color:var(--warn);font-size:28px">payments</i>' +
+          '<div class="grow"><b>' + esc(r.clientName) + ' reportó pago: ' + money(r.amount) + '</b><small><span>' + esc(r.method) + '</span><span>Ref: ' + esc(r.reference || 'Sin ref') + '</span></small></div></div>' +
+          '<div class="acts" style="margin-top:12px"><button class="btn d" onclick="resolveReq(\'' + r.id + '\',\'rejected\')">Rechazar</button><button class="btn ok" onclick="approvePaymentReq(\'' + r.id + '\')"><i class="icon">check</i> Verificar y aplicar</button></div></div>';
+      } else {
+        return '<div class="card" style="border-color:var(--primary)">' +
+          '<div class="card-header"><i class="icon" style="color:var(--primary);font-size:28px">add_shopping_cart</i>' +
+          '<div class="grow"><b>' + esc(r.clientName) + ' solicita ' + esc(r.serviceName) + '</b><small><span>' + money(r.price) + '/mes</span><span>' + esc(r.note || 'Sin nota') + '</span></small></div></div>' +
+          '<div class="acts" style="margin-top:12px"><button class="btn d" onclick="resolveReq(\'' + r.id + '\',\'rejected\')">Rechazar</button><button class="btn" onclick="approveServiceReq(\'' + r.id + '\')"><i class="icon">check</i> Aprobar</button></div></div>';
+      }
+    }).join('');
+}
+
+async function approvePaymentReq(reqId){
+  var r = ADMIN_REQS.find(function(x){ return x.id === reqId; }); if (!r) return;
+  var curM = mk(today()), key = (r.clientName || '').trim().toLowerCase();
+  S.accounts.forEach(function(c){
+    c.users.forEach(function(u){
+      if (u.name.trim().toLowerCase() === key && !u.paused) {
+        var deb = getDebt(u);
+        if (!Array.isArray(u.paidMonths)) u.paidMonths = [];
+        deb.unpaid.forEach(function(m){ if (u.paidMonths.indexOf(m) === -1) u.paidMonths.push(m); });
+        if (u.paidMonths.indexOf(curM) === -1) u.paidMonths.push(curM);
+      }
+    });
+  });
+  save();
+  await db.collection('requests').doc(reqId).update({ status: 'approved', resolvedAt: Date.now() });
+  await refreshClientPortalSafe(key, r.uid);
+  toast('Pago verificado y portal actualizado');
+  render();
+}
+
+async function approveServiceReq(reqId){
+  var r = ADMIN_REQS.find(function(x){ return x.id === reqId; }); if (!r) return;
+  await db.collection('requests').doc(reqId).update({ status: 'approved', resolvedAt: Date.now() });
+  toast('Solicitud aprobada. Agrega su perfil en la cuenta y republica su portal.');
+  if (r.accountId && findAcc(r.accountId)) { editUser(r.accountId, ''); }
+}
+
+async function resolveReq(reqId, st){
+  await db.collection('requests').doc(reqId).update({ status: st, resolvedAt: Date.now() });
+  toast('Solicitud marcada como rechazada');
+}
+
+async function refreshClientPortalSafe(clientKey, clientUid){
+  if (!clientUid || !db) return;
+  clients();
+  var g = CL.find(function(x){ return x.name.toLowerCase() === clientKey; });
+  if (!g) return;
+  var d = cliData(g);
+  try {
+    var prev = await db.collection('portal').doc(clientUid).get();
+    if (prev.exists && prev.data().rows) {
+      var prevRows = prev.data().rows;
+      d.rows.forEach(function(row){
+        var match = prevRows.find(function(pr){ return pr.cid === row.cid && pr.pw; });
+        if (match) row.pw = match.pw;
+      });
+    }
+    await db.collection('portal').doc(clientUid).set(Object.assign({}, d, { updatedAt: Date.now() }));
+  } catch (e) { console.error(e); }
+}
+
+/* =========================================================
+   LÓGICA ADMIN (FACTURACIÓN, CUENTAS, CLIENTES, BÓVEDA)
+   ========================================================= */
+function getDebt(u){
+  var t = today(), curM = mk(t), start = u.startMonth || curM;
+  var paid = Array.isArray(u.paidMonths) ? u.paidMonths : (u.paidFor ? [u.paidFor] : []);
+  if (u.paused) return { paused: true, unpaid: [], count: 0, debt: 0, isCurPaid: paid.indexOf(curM) !== -1, nextD: null, paidMonths: paid };
+  var list = getMonthList(start, curM), unpaid = [];
+  list.forEach(function(m){ if (paid.indexOf(m) === -1) { if (m < curM) unpaid.push(m); else if (m === curM && t.getDate() > (u.day || 1)) unpaid.push(m); } });
+  var isCurPaid = paid.indexOf(curM) !== -1;
+  var targetM = isCurPaid ? (function(){ var p = curM.split('-').map(Number), y = p[0], m = p[1] + 1; if (m > 12) { m = 1; y++; } return y + '-' + (m < 10 ? '0' : '') + m; })() : curM;
+  var pTarget = targetM.split('-').map(Number);
+  return { paused: false, unpaid: unpaid, count: unpaid.length, debt: unpaid.length * (+u.amount || 0), isCurPaid: isCurPaid, nextD: dueDate(pTarget[0], pTarget[1] - 1, u.day || 1), paidMonths: paid };
+}
+
+function getBillingInfo(u){
+  var deb = getDebt(u), t = today(), curM = mk(t), amt = +u.amount || 0;
+  if (u.paused) return { deb: deb, pastMonths: [], pastDebt: 0, curDue: 0, totalPay: 0, statusText: 'Servicio pausado', shortStatus: 'Pausado', badgeCls: 'warn', nextCycleText: 'Pausado', isUpToDate: true };
+  var pastMonths = deb.unpaid.filter(function(m){ return m < curM; }), pastDebt = pastMonths.length * amt, curDue = deb.isCurPaid ? 0 : amt, totalPay = pastDebt + curDue;
+  var nextDateStr = deb.nextD ? fmt(deb.nextD) : '', diff = deb.nextD ? Math.round((deb.nextD - t) / 864e5) : 0;
+  var statusText = '', shortStatus = '', badgeCls = 'ok';
+  if (deb.isCurPaid && pastMonths.length === 0) { statusText = 'Al corriente — Siguiente ciclo: ' + nextDateStr; shortStatus = 'Próx. ' + nextDateStr; badgeCls = 'ok'; }
+  else if (pastMonths.length > 0 && curDue > 0) { statusText = 'Adeudo anterior (' + pastMonths.map(monthLabel).join(', ') + ') + Ciclo actual'; shortStatus = 'Debe ' + (pastMonths.length + 1) + ' m'; badgeCls = 'bad'; }
+  else if (pastMonths.length > 0) { statusText = 'Adeudo anterior (' + pastMonths.map(monthLabel).join(', ') + ')'; shortStatus = 'Debe ' + pastMonths.length + ' m'; badgeCls = 'bad'; }
+  else {
+    if (diff < 0) { statusText = 'Ciclo actual vencido (corte ' + nextDateStr + ')'; shortStatus = 'Vencido'; badgeCls = 'bad'; }
+    else if (diff === 0) { statusText = 'Fecha de pago hoy (' + nextDateStr + ')'; shortStatus = 'Cobra hoy'; badgeCls = 'warn'; }
+    else { statusText = 'Siguiente ciclo: ' + nextDateStr + ' (en ' + diff + ' días)'; shortStatus = 'Corte ' + nextDateStr; badgeCls = diff <= 3 ? 'warn' : ''; }
+  }
+  return { deb: deb, pastMonths: pastMonths, pastDebt: pastDebt, curDue: curDue, totalPay: totalPay, statusText: statusText, shortStatus: shortStatus, badgeCls: badgeCls, nextCycleText: nextDateStr, isUpToDate: (totalPay === 0) };
+}
+
+function userChip(deb, u){
+  if (u.paused) return '<span class="chip warn">Pausado</span>';
+  if (deb.count > 0) return '<span class="chip bad">Debe ' + deb.count + 'm</span>';
+  if (deb.isCurPaid) return '<span class="chip ok">Al corriente</span>';
+  var diff = Math.round((deb.nextD - today()) / 864e5);
+  return diff === 0 ? '<span class="chip warn">Cobra hoy</span>' : '<span class="chip ' + (diff <= 3 ? 'warn' : '') + '">En ' + diff + ' d</span>';
+}
+
+function allUsers(){ var a = []; S.accounts.forEach(function(c){ c.users.forEach(function(u){ a.push({ c: c, u: u, deb: getDebt(u) }); }); }); return a; }
+
+function urow(x, acc){
+  var c = x.c, u = x.u, deb = x.deb, sub = [];
+  if (acc) sub.push('<span>' + esc(c.name) + '</span>');
+  sub.push('<span>' + money(u.amount) + '</span>');
+  if (u.pfl) sub.push('<span>' + esc(u.pfl) + (u.pin ? ' PIN ' + esc(u.pin) : '') + '</span>');
+  if (deb.count > 0) sub.push('<span style="color:var(--bad)">Adeudo: ' + deb.unpaid.map(monthLabel).join(', ') + '</span>');
+  else if (!u.paused && deb.nextD) sub.push('<span>' + (deb.isCurPaid ? 'Próximo ' : 'Corte ') + fmt(deb.nextD) + '</span>');
+  return '<div class="row ' + (u.paused ? 'paused' : '') + '">' + (acc ? badge(c, 1) : '') +
+    '<div class="grow" onclick="editUser(\'' + c.id + '\',\'' + u.id + '\')"><b>' + esc(u.name) + '</b><small>' + sub.join('') + '</small></div>' +
+    '<div class="row-actions">' + userChip(deb, u) +
+      '<button class="mini ' + (deb.count > 0 ? 'bad' : 'primary') + '" onclick="quickPay(\'' + c.id + '\',\'' + u.id + '\')">' + (deb.count > 0 ? 'Cobrar 1m' : (deb.isCurPaid ? 'Deshacer' : 'Ya pagó')) + '</button>' +
+      '<button class="mini d" onclick="quickDelUser(this,\'' + c.id + '\',\'' + u.id + '\')"><i class="icon" style="font-size:16px">delete</i></button>' +
+    '</div></div>';
+}
+
+function quickPay(cid, uid){
+  vib(40);
+  var c = findAcc(cid), u = c.users.filter(function(x){ return x.id === uid; })[0], deb = getDebt(u);
+  if (!Array.isArray(u.paidMonths)) u.paidMonths = u.paidFor ? [u.paidFor] : [];
+  if (deb.count > 0) { var mToPay = deb.unpaid[0]; u.paidMonths.push(mToPay); toast('Cobrado mes de ' + monthLabelFull(mToPay)); }
+  else if (deb.isCurPaid) { u.paidMonths.pop(); toast('Se deshizo el último pago'); }
+  else { var curM = mk(today()); if (u.paidMonths.indexOf(curM) === -1) u.paidMonths.push(curM); toast('Mes corriente marcado como pagado'); }
+  save(); render();
+}
+
+function quickDelUser(btn, cid, uid){
+  vib(50);
+  if (!btn.dataset.s) { btn.dataset.s = "1"; btn.innerHTML = '<i class="icon" style="font-size:16px">check</i>'; toast('Toca otra vez para eliminar'); setTimeout(function(){ btn.dataset.s = ''; btn.innerHTML = '<i class="icon" style="font-size:16px">delete</i>'; }, 3000); return; }
+  delUser(cid, uid);
+}
+
+function home(){
+  var us = allUsers(), totMonth = 0, gotMonth = 0, totalDebt = 0;
+  us.forEach(function(x){ var u = x.u, deb = x.deb; if (!u.paused) totMonth += +u.amount || 0; if (deb.isCurPaid) gotMonth += +u.amount || 0; totalDebt += deb.debt; });
+  var h = appLogo() + '<div class="top-actions"><button class="btn" style="flex:2" onclick="editAcc(\'\')"><i class="icon">add</i> Nueva cuenta</button><button class="btn g" style="flex:1" onclick="openVault()"><i class="icon">lock_open</i> Bóveda</button></div>' + adminReqBlock();
+  if (!S.accounts.length) return h + '<div class="empty"><p>Aún no tienes cuentas registradas.</p><button class="btn" onclick="editAcc(\'\')">Crear cuenta</button></div>';
+  h += '<div class="strip"><div><b>' + money(totMonth) + '</b><small>Meta mes</small></div><div><b style="color:var(--ok)">' + money(gotMonth) + '</b><small>Cobrado</small></div><div><b style="color:' + (totalDebt ? 'var(--bad)' : 'var(--mu)') + '">' + money(totalDebt) + '</b><small>Adeudo total</small></div></div>' + ownBlock(totMonth) + '<h2>Cobros y vencimientos</h2>';
+  if (!us.length) return h + '<div class="empty"><p>Agrega perfiles a tus cuentas para verlos aquí.</p></div>';
+  us.sort(function(a,b){ if (b.deb.count !== a.deb.count) return b.deb.count - a.deb.count; return (a.deb.nextD || 0) - (b.deb.nextD || 0); });
+  return h + us.map(function(x){ return urow(x, true); }).join('');
+}
+
+function accts(){
+  var h = appLogo() + '<div class="top-actions"><button class="btn" onclick="editAcc(\'\')"><i class="icon">add</i> Nueva cuenta</button><button class="btn g" onclick="openVault()"><i class="icon">lock_open</i> Bóveda de claves</button></div>';
+  if (!S.accounts.length) return h + '<div class="empty"><p>No tienes cuentas todavía.</p></div>';
+  return h + S.accounts.map(function(c){
+    var t = 0; c.users.forEach(function(u){ if (!u.paused) t += +u.amount || 0; });
+    var exp = !!ACC_EXP[c.id], tab = ACC_TAB[c.id] || 'users', inner = '';
+    if (exp) {
+      inner = '<div class="subtabs"><button class="subtab ' + (tab === 'users' ? 'on' : '') + '" onclick="setAccTab(\'' + c.id + '\',\'users\')"><i class="icon" style="font-size:16px">group</i> Perfiles (' + c.users.length + ')</button><button class="subtab ' + (tab === 'pay' ? 'on' : '') + '" onclick="setAccTab(\'' + c.id + '\',\'pay\')"><i class="icon" style="font-size:16px">credit_card</i> Facturación</button><button class="subtab ' + (tab === 'cred' ? 'on' : '') + '" onclick="setAccTab(\'' + c.id + '\',\'cred\')"><i class="icon" style="font-size:16px">key</i> Accesos</button></div>';
+      if (tab === 'users') {
+        inner += c.users.map(function(u){ return urow({ c: c, u: u, deb: getDebt(u) }, false); }).join('') + (c.users.length < (c.slots || 4) ? '<button class="add" onclick="editUser(\'' + c.id + '\',\'\')"><i class="icon">person_add</i> Agregar perfil / usuario</button>' : '');
+      } else if (tab === 'pay') {
+        inner += '<div class="strip" style="grid-template-columns:1fr 1fr;margin-bottom:10px"><div><b>' + money(c.cost) + '</b><small>Mi costo al mes</small></div><div><b style="color:var(--ok)">' + money(t - (+c.cost || 0)) + '</b><small>Ganancia neta</small></div></div>' + orow(c, false);
+      } else if (tab === 'cred') {
+        inner += c.mode === 'fam' ? '<div style="padding:16px;text-align:center;color:var(--mu);font-size:13px">Esta cuenta es <b>Grupo familiar</b>.</div>' : cinfo(c) + '<button class="btn g" style="width:100%;margin-top:8px" onclick="pwdNotice(\'' + c.id + '\')"><i class="icon">campaign</i> Aviso de nueva contraseña</button>';
+      }
+    }
+    return '<div class="card"><div class="card-header">' + badge(c) + '<div class="grow" onclick="toggleAcc(\'' + c.id + '\')"><b>' + esc(c.name) + '</b><small><span>' + c.users.length + '/' + (c.slots || 4) + ' perfiles</span><span>' + money(t) + ' al mes</span></small></div><button class="mini" onclick="editAcc(\'' + c.id + '\')">Editar</button><button class="mini d" onclick="quickDelAcc(this,\'' + c.id + '\')">Eliminar</button><button class="mini" style="width:34px;height:34px;padding:0" onclick="toggleAcc(\'' + c.id + '\')"><i class="icon">' + (exp ? 'expand_less' : 'expand_more') + '</i></button></div>' + inner + '</div>';
+  }).join('');
+}
+
+function toggleAcc(cid){ ACC_EXP[cid] = !ACC_EXP[cid]; if (!ACC_TAB[cid]) ACC_TAB[cid] = 'users'; render(); }
+function setAccTab(cid, tab){ ACC_EXP[cid] = true; ACC_TAB[cid] = tab; render(); }
+function quickDelAcc(btn, cid){ vib(50); if (!btn.dataset.s) { btn.dataset.s = "1"; btn.textContent = '¿Eliminar?'; setTimeout(function(){ btn.dataset.s = ''; btn.textContent = 'Eliminar'; }, 3500); return; } S.accounts = S.accounts.filter(function(c){ return c.id !== cid; }); save(); render(); toast('Cuenta eliminada'); }
+
+function render(){
+  var views = { home: home, accts: accts, clients: clients, sets: sets };
+  $('#app').innerHTML = views[view]();
+  ['home','accts','clients','sets'].forEach(function(k, idx){ $('#n' + (idx + 1)).className = 'nav-btn' + (view === k ? ' on' : ''); });
+}
+function go(v){ view = v; render(); window.scrollTo(0,0); }
+function openS(h){ $('#sheet').innerHTML = '<div class="bk" onclick="closeS()"></div><div class="pan">' + h + '</div>'; $('#sheet').className = 'on'; }
+function closeS(){ $('#sheet').className = ''; $('#sheet').innerHTML = ''; if (vaultTimer) clearInterval(vaultTimer); }
+function findAcc(id){ return S.accounts.filter(function(c){ return c.id === id; })[0]; }
+
+function editAcc(id){
+  var c = findAcc(id), fam = c && c.mode === 'fam'; SEL = c && c.logo || '';
+  openS('<h2>' + (c ? 'Editar cuenta' : 'Nueva cuenta') + '</h2>' +
+    '<label>Nombre de la cuenta</label><input id="f1" value="' + esc(c ? c.name : '') + '" placeholder="Ej. Netflix 4K">' +
+    '<label>Plataforma / Icono</label>' + platPicker() +
+    '<label>Modo de acceso</label><select id="f12" onchange="modeSw()"><option value="cred"' + (fam ? '' : ' selected') + '>Con correo y contraseña</option><option value="fam"' + (fam ? ' selected' : '') + '>Grupo familiar</option></select>' +
+    '<div id="cred"' + (fam ? ' style="display:none"' : '') + '>' +
+      '<label>Correo o usuario maestro</label><input id="f4" autocapitalize="none" value="' + esc(c && c.login || '') + '">' +
+      '<label>Contraseña de la cuenta</label><div class="inp-eye"><input id="f5" type="password" autocomplete="off" placeholder="' + (c && c.pw ? 'Guardada. Escribe para cambiarla' : 'Se almacena cifrada') + '"><button class="eye-btn" type="button" onclick="toggleInp(\'f5\', this)"><i class="icon" style="font-size:20px">visibility</i></button>' + (c && c.pw ? '<button class="mini" type="button" onclick="showPw(\'' + id + '\')">Ver guardada</button>' : '') + '</div>' +
+    '</div>' +
+    '<div class="grid-2"><div><label>Costo mensual</label><input id="f6" type="number" inputmode="decimal" value="' + (c && c.cost || '') + '"></div><div><label>Día de corte (1-31)</label><input id="f7" type="number" inputmode="numeric" min="1" max="31" value="' + (c && c.payDay || '') + '"></div></div>' +
+    '<div class="grid-2"><div><label>Límite de perfiles</label><input id="f9" type="number" inputmode="numeric" min="1" max="10" value="' + (c && c.slots || 4) + '"></div><div><label>Precio catálogo (por perfil)</label><input id="fCatPrice" type="number" inputmode="decimal" value="' + (c && c.catalogPrice || '') + '" placeholder="Ej. 85"></div></div>' +
+    '<label class="chk"><input type="checkbox" id="fShowCat"' + (c && c.hideCatalog ? '' : ' checked') + '> Mostrar en catálogo de clientes si hay lugares libres</label>' +
+    '<div class="acts"><button class="btn g" onclick="closeS()">Cancelar</button><button class="btn" onclick="saveAcc(\'' + id + '\')">Guardar</button></div>');
+}
+function saveAcc(id){
+  var v = { name: $('#f1').value.trim() || 'Cuenta', login: $('#f4') ? $('#f4').value.trim() : '', pw: $('#f12').value === 'fam' ? '' : ($('#f5') ? $('#f5').value : ''), cost: parseFloat($('#f6').value) || 0, payDay: Math.min(31, Math.max(0, parseInt($('#f7').value) || 0)), slots: Math.min(10, Math.max(1, parseInt($('#f9').value) || 4)), catalogPrice: parseFloat($('#fCatPrice').value) || 0, hideCatalog: !$('#fShowCat').checked, mode: $('#f12').value, logo: SEL };
+  function done(p){ var c = findAcc(id); if (!c) { c = { id: uid(), users: [] }; S.accounts.push(c); } Object.assign(c, { name: v.name, login: v.login, cost: v.cost, payDay: v.payDay, slots: v.slots, catalogPrice: v.catalogPrice, hideCatalog: v.hideCatalog, mode: v.mode, logo: v.logo }); if (p) c.pw = p; save(); closeS(); render(); toast('Cuenta guardada'); }
+  if (v.pw) withKey(function(){ enc(v.pw).then(done); }); else done(null);
+}
+
+function editUser(cid, id){ if (id) showUserSummary(cid, id); else showUserForm(cid, ''); }
+function showUserSummary(cid, id){
+  var c = findAcc(cid), u = c.users.filter(function(x){ return x.id === id; })[0], deb = getDebt(u);
+  openS('<div style="text-align:center;margin:10px 0 20px"><h2 style="margin:0;font-size:24px">' + esc(u.name) + '</h2><p style="margin-top:4px">' + (u.pfl ? 'Perfil: ' + esc(u.pfl) : 'Sin perfil') + (u.pin ? ' (PIN ' + esc(u.pin) + ')' : '') + '</p></div>' +
+  '<div class="card"><div class="tt"><span>Monto mensual</span><b>' + money(u.amount) + '</b></div><div class="tt"><span>Día de cobro</span><b>Día ' + u.day + '</b></div><div class="tt"><span>Estado</span><b style="color:' + (deb.count > 0 ? 'var(--bad)' : 'var(--ok)') + '">' + (deb.count > 0 ? 'Debe ' + deb.count + ' meses' : 'Al corriente') + '</b></div></div>' +
+  '<button class="btn g" style="width:100%;margin-bottom:12px" onclick="showUserForm(\'' + cid + '\',\'' + id + '\')"><i class="icon">edit</i> Editar datos</button>' +
+  '<div style="display:flex;gap:8px;flex-direction:column"><button class="btn" style="justify-content:flex-start" onclick="ticket(\'' + cid + '\',\'' + id + '\')"><i class="icon">receipt_long</i> Estado de cuenta de este servicio</button><button class="btn g" style="justify-content:flex-start" onclick="ticketCliFor(\'' + cid + '\',\'' + id + '\')"><i class="icon">account_balance_wallet</i> Estado de cuenta consolidado</button><button class="btn g" style="justify-content:flex-start" onclick="welcomeCard(\'' + cid + '\',\'' + id + '\')"><i class="icon">celebration</i> Tarjeta de bienvenida</button></div>' +
+  '<div class="acts"><button class="btn g" onclick="closeS()">Cerrar</button></div>');
+}
+function showUserForm(cid, id){
+  var c = findAcc(cid), u = id ? c.users.filter(function(x){ return x.id === id; })[0] : null, curM = mk(today()), start = (u && u.startMonth) || curM, paused = u ? !!u.paused : false;
+  openS('<h2>' + (u ? 'Editar usuario' : 'Nuevo usuario') + '</h2><label>Nombre completo</label><input id="uf1" value="' + esc(u ? u.name : '') + '"><label>WhatsApp (10 dígitos)</label><input id="uf9" type="tel" inputmode="numeric" value="' + esc(u && u.phone || '') + '"><div class="grid-2"><div><label>Perfil</label><input id="uf10" value="' + esc(u && u.pfl || '') + '"></div><div><label>PIN</label><input id="uf11" inputmode="numeric" value="' + esc(u && u.pin || '') + '"></div></div><div class="grid-2"><div><label>Monto mensual</label><input id="uf2" type="number" inputmode="decimal" value="' + (u ? u.amount : '') + '"></div><div><label>Día de cobro (1-31)</label><input id="uf3" type="number" inputmode="numeric" min="1" max="31" value="' + (u ? u.day : '') + '"></div></div><div class="grid-2"><div><label>Cobrar desde</label><input id="ufStart" type="month" value="' + start + '"></div><div><label>Estado</label><select id="ufPaused"><option value="0"' + (!paused ? ' selected' : '') + '>Activo</option><option value="1"' + (paused ? ' selected' : '') + '>Pausado</option></select></div></div>' + (!u ? '<label class="chk"><input type="checkbox" id="ufCurPaid" checked> Arranca al corriente</label>' : '') + '<div class="acts"><button class="btn g" onclick="' + (u ? 'showUserSummary(\'' + cid + '\',\'' + id + '\')' : 'closeS()') + '">Cancelar</button><button class="btn" onclick="saveUser(\'' + cid + '\',\'' + id + '\')">Guardar</button></div>');
+}
+function saveUser(cid, id){
+  var c = findAcc(cid), n = $('#uf1').value.trim() || 'Usuario', a = parseFloat($('#uf2').value) || 0, d = Math.min(31, Math.max(1, parseInt($('#uf3').value) || 1)), phone = $('#uf9').value.replace(/\D/g, ''), pfl = $('#uf10').value.trim(), pin = $('#uf11').value.trim(), startMonth = $('#ufStart').value || mk(today()), paused = $('#ufPaused').value === '1', isCurPaidBox = $('#ufCurPaid') ? $('#ufCurPaid').checked : false;
+  var u = id ? c.users.filter(function(x){ return x.id === id; })[0] : null, data = { name: n, amount: a, day: d, phone: phone, pfl: pfl, pin: pin, startMonth: startMonth, paused: paused };
+  if (u) Object.assign(u, data); else c.users.push(Object.assign({ id: uid(), paidMonths: isCurPaidBox ? [startMonth] : [] }, data));
+  save(); render(); if (u) showUserSummary(cid, id); else closeS(); toast('Usuario guardado');
+}
+function delUser(cid, id){ var c = findAcc(cid); c.users = c.users.filter(function(x){ return x.id !== id; }); save(); closeS(); render(); toast('Usuario eliminado'); }
+
+/* BÓVEDA */
+var vaultTimer = null;
+function openVault(){
+  withKey(function(){
+    var accs = S.accounts.filter(function(c){ return c.mode !== 'fam' && (c.login || c.pw); }), secLeft = 30;
+    var h = '<h2><i class="icon" style="color:var(--primary)">lock_open</i> Bóveda de contraseñas</h2><p style="display:flex;justify-content:space-between;align-items:center"><span>Credenciales protegidas</span><b id="vCountdown" class="chip warn">Se cerrará en 30s</b></p><div style="height:12px"></div>';
+    h += !accs.length ? '<div class="empty"><p>No tienes contraseñas guardadas.</p></div>' : accs.map(function(c){
+      return '<div class="vault"><div class="vr"><span style="display:flex;align-items:center;gap:10px">' + badge(c, 1) + '<b>' + esc(c.name) + '</b></span>' + (c.login ? '<button class="mini" onclick="copyTxt(decodeURIComponent(\'' + encodeURIComponent(c.login) + '\'))">Copiar usuario</button>' : '') + '</div>' + (c.login ? '<div class="vr"><span>Usuario: <code>' + esc(c.login) + '</code></span></div>' : '') + (c.pw ? '<div class="vr"><span>Clave: <code id="pwv-' + c.id + '">••••••••</code></span><span><button class="mini" onclick="toggleVaultPw(\'' + c.id + '\')">Ver</button> <button class="mini" onclick="pwCopy(\'' + c.id + '\')">Copiar</button></span></div>' : '') + '</div>';
+    }).join('');
+    h += '<div class="acts"><button class="btn" onclick="closeS()">Cerrar bóveda</button></div>';
+    openS(h);
+    if (vaultTimer) clearInterval(vaultTimer);
+    vaultTimer = setInterval(function(){ secLeft--; var el = $('#vCountdown'); if (el) el.textContent = 'Se cerrará en ' + secLeft + 's'; if (secLeft <= 0) { clearInterval(vaultTimer); closeS(); toast('Bóveda bloqueada'); } }, 1000);
+  });
+}
+function toggleVaultPw(id){ var el = $('#pwv-' + id); if (!el) return; if (el.dataset.v) { el.textContent = '••••••••'; delete el.dataset.v; } else { pwGet(id, function(t){ el.textContent = t; el.dataset.v = "1"; }); } }
+var KEY_CRYPTO = null, pend = null, TK = '', TB = '';
+function b64(u){ return btoa(String.fromCharCode.apply(null, u)); }
+function ub(s){ return Uint8Array.from(atob(s), function(c){ return c.charCodeAt(0); }); }
+async function derive(pw, salt){ var m = await crypto.subtle.importKey('raw', new TextEncoder().encode(pw), 'PBKDF2', false, ['deriveKey']); return crypto.subtle.deriveKey({ name: 'PBKDF2', salt: ub(salt), iterations: 150000, hash: 'SHA-256' }, m, { name: 'AES-GCM', length: 256 }, false, ['encrypt','decrypt']); }
+async function enc(t){ var iv = crypto.getRandomValues(new Uint8Array(12)), c = await crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv }, KEY_CRYPTO, new TextEncoder().encode(t)); return b64(iv) + '.' + b64(new Uint8Array(c)); }
+async function dec(s){ var p = s.split('.'), d = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: ub(p[0]) }, KEY_CRYPTO, ub(p[1])); return new TextDecoder().decode(d); }
+function say(t){ var m = $('#msg'); if (m) m.textContent = t; }
+function withKey(fn){
+  if (KEY_CRYPTO) { fn(); return; }
+  pend = fn; var n = !S.vault;
+  openS('<h2>' + (n ? 'Crea tu clave maestra' : 'Desbloquear contraseñas') + '</h2><p>' + (n ? 'Protege tus contraseñas con cifrado.' : 'Escribe tu clave maestra.') + '</p><label>Clave maestra</label><div class="inp-eye"><input id="mf1" type="password" autocomplete="off"><button class="eye-btn" type="button" onclick="toggleInp(\'mf1\', this)"><i class="icon" style="font-size:20px">visibility</i></button></div>' + (n ? '<label>Repite la clave</label><div class="inp-eye"><input id="mf2" type="password" autocomplete="off"><button class="eye-btn" type="button" onclick="toggleInp(\'mf2\', this)"><i class="icon" style="font-size:20px">visibility</i></button></div>' : '') + '<div class="acts"><button class="btn g" onclick="pend=null;closeS()">Cancelar</button><button class="btn" onclick="doUnlock()">Continuar</button></div><p id="msg" style="margin-top:10px;color:var(--bad)"></p>');
+}
+async function doUnlock(){
+  var p = $('#mf1').value; if (!p) { say('Escribe tu clave.'); return; }
+  try {
+    if (!S.vault) { if (p.length < 6 || p !== $('#mf2').value) { say('Mínimo 6 caracteres y repítela igual.'); return; } var salt = b64(crypto.getRandomValues(new Uint8Array(16))); KEY_CRYPTO = await derive(p, salt); S.vault = { salt: salt, check: await enc('ok') }; save(); }
+    else { KEY_CRYPTO = await derive(p, S.vault.salt); if (await dec(S.vault.check) !== 'ok') throw 0; }
+  } catch (e) { KEY_CRYPTO = null; say('Clave incorrecta.'); return; }
+  var f = pend; pend = null; closeS(); if (f) f();
+}
+function showPw(id){ var fill = function(){ dec(findAcc(id).pw).then(function(t){ var e = $('#f5'); e.value = t; e.type = 'text'; }); }; if (KEY_CRYPTO) fill(); else withKey(function(){ editAcc(id); fill(); }); }
+function orow(c, nm){ if (!c.payDay) return ''; var t = today(), paid = c.paidFor === mk(t), d = dueDate(t.getFullYear(), t.getMonth() + (paid ? 1 : 0), c.payDay), diff = Math.round((d - t) / 864e5); var ochip = paid ? '<span class="chip ok">Al corriente</span>' : (diff < 0 ? '<span class="chip bad">Vencida</span>' : '<span class="chip ok">Activa</span>'); return '<div class="row" style="border-left:3px solid var(--primary)">' + (nm ? badge(c, 1) : '') + '<div class="grow" onclick="editAcc(\'' + c.id + '\')"><b>' + (nm ? esc(c.name) : 'Mi pago del servicio') + '</b><small><span>' + money(c.cost) + '</span><span>' + (paid ? 'Próximo ' : 'Vence ') + fmt(d) + '</span></small></div>' + ochip + '<button class="mini" onclick="payOwn(\'' + c.id + '\')">' + (paid ? 'Deshacer' : 'Ya pagué') + '</button></div>'; }
+function cinfo(c){ if ((c.login || c.pw) && c.mode !== 'fam') return '<div class="vault">' + (c.login ? '<div class="vr"><span>👤 <code>' + esc(c.login) + '</code></span><button class="mini" onclick="copyTxt(decodeURIComponent(\'' + encodeURIComponent(c.login) + '\'))">Copiar</button></div>' : '') + (c.pw ? '<div class="vr"><span>🔑 <code id="pw-' + c.id + '">••••••••</code></span><span><button class="mini" onclick="pwView(\'' + c.id + '\')">Ver</button> <button class="mini" onclick="pwCopy(\'' + c.id + '\')">Copiar</button></span></div>' : '') + '</div>'; return ''; }
+function payOwn(id){ vib(40); var c = findAcc(id); c.paidFor = c.paidFor === mk(today()) ? null : mk(today()); save(); render(); }
+function ownBlock(tot){ var cost = 0; S.accounts.forEach(function(c){ cost += +c.cost || 0; }); if (!cost) return ''; return '<div class="strip" style="grid-template-columns:1fr 1fr"><div><b>' + money(cost) + '</b><small>Mi costo al mes</small></div><div><b style="color:var(--ok)">' + money(tot - cost) + '</b><small>Ganancia neta</small></div></div>'; }
+
+/* PUBLICAR PORTAL Y ETIQUETAS DE CLIENTE */
+function openPortalPublish(gi){
+  var g = CL[gi]; if (!g) return;
+  var key = g.name.toLowerCase(), savedUid = (S.portalMap && S.portalMap[key]) || '', curTag = (S.clientTags && S.clientTags[key]) || '';
+  openS('<h2>Portal Web — ' + esc(g.name) + '</h2>' +
+    '<label>UID del cliente en Firebase</label><input id="pUid" value="' + esc(savedUid) + '" placeholder="Pega aquí el UID del cliente">' +
+    '<label>Etiqueta del cliente</label><select id="pTag"><option value=""' + (!curTag ? ' selected' : '') + '>Normal</option><option value="prueba"' + (curTag === 'prueba' ? ' selected' : '') + '>Cliente de prueba</option><option value="vip"' + (curTag === 'vip' ? ' selected' : '') + '>Cliente VIP</option></select>' +
+    '<label class="chk"><input type="checkbox" id="pIncPw" checked> Publicar correos y contraseñas</label>' +
+    '<div class="acts"><button class="btn g" onclick="closeS()">Cancelar</button><button class="btn" onclick="publishPortal(' + gi + ')"><i class="icon">cloud_upload</i> Publicar portal</button></div>');
+}
+async function publishPortal(gi){
+  var clientUid = ($('#pUid').value || '').trim(), tag = $('#pTag').value, incPw = $('#pIncPw').checked;
+  var g = CL[gi], key = g.name.toLowerCase();
+  if (!S.clientTags) S.clientTags = {};
+  S.clientTags[key] = tag;
+  if (!clientUid) { save(); closeS(); render(); toast('Etiqueta guardada (falta UID para publicar portal)'); return; }
+  var d = cliData(g);
+  if (incPw) {
+    var needsKey = d.rows.some(function(r){ return r.mode !== 'fam' && r.hasPw; });
+    if (needsKey && !KEY_CRYPTO) { withKey(function(){ openPortalPublish(gi); }); return; }
+    for (var i = 0; i < d.rows.length; i++) {
+      var r = d.rows[i];
+      if (r.mode !== 'fam' && r.hasPw) { var c = findAcc(r.cid); if (c && c.pw) r.pw = await dec(c.pw); }
+    }
+  }
+  S.portalMap[key] = clientUid; save();
+  try {
+    await db.collection('portal').doc(clientUid).set(Object.assign({}, d, { updatedAt: Date.now() }));
+    closeS(); render(); toast('Portal del cliente actualizado en la nube');
+  } catch (e) { toast('Error al publicar: revisa tus reglas de Firestore'); }
+}
+
+/* TICKETS Y CLIENTES CON FILTROS */
+var CL = [], CT = null, PH = '';
+function clients(){
+  var m = {};
+  S.accounts.forEach(function(c){
+    c.users.forEach(function(u){
+      var k = u.name.trim().toLowerCase();
+      if (!m[k]) m[k] = { name: u.name.trim(), phone: '', it: [], tot: 0, debt: 0, pendingCur: 0, tag: (S.clientTags && S.clientTags[k]) || '' };
+      var g = m[k], b = getBillingInfo(u);
+      g.phone = g.phone || u.phone || '';
+      if (!u.paused) g.tot += +u.amount || 0;
+      g.debt += b.pastDebt;
+      g.pendingCur += b.curDue;
+      g.it.push({ c: c, u: u, deb: b.deb });
+    });
+  });
+  CL = Object.keys(m).map(function(k){ return m[k]; }).sort(function(a,b){ return a.name.localeCompare(b.name); });
+  var filters = [['all','Todos'],['late','Atrasados'],['pending','Pendientes'],['ok','Al corriente'],['prueba','Prueba'],['vip','VIP']];
+  var h = appLogo() + '<h1>Clientes</h1><p>Filtra por estado, etiqueta o publica su portal</p><div style="height:12px"></div>' +
+    '<div class="filter-bar">' + filters.map(function(f){ return '<button class="f-pill ' + (CLI_FILTER === f[0] ? 'on' : '') + '" onclick="CLI_FILTER=\'' + f[0] + '\';render()">' + f[1] + '</button>'; }).join('') + '</div>';
+
+  var filtered = CL.map(function(g, idx){ return { g: g, idx: idx }; }).filter(function(item){
+    var g = item.g;
+    if (CLI_FILTER === 'late') return g.debt > 0;
+    if (CLI_FILTER === 'pending') return g.debt === 0 && g.pendingCur > 0;
+    if (CLI_FILTER === 'ok') return g.debt === 0 && g.pendingCur === 0;
+    if (CLI_FILTER === 'prueba') return g.tag === 'prueba';
+    if (CLI_FILTER === 'vip') return g.tag === 'vip';
+    return true;
+  });
+
+  if (!filtered.length) return h + '<div class="empty"><p>No hay clientes en esta categoría.</p></div>';
+  return h + filtered.map(function(item){
+    var g = item.g, gi = item.idx;
+    var stChip = g.debt > 0 ? '<span class="chip bad">Atrasado ' + money(g.debt + g.pendingCur) + '</span>' : (g.pendingCur > 0 ? '<span class="chip warn">Pendiente ' + money(g.pendingCur) + '</span>' : '<span class="chip ok">Al corriente</span>');
+    var tChip = g.tag === 'prueba' ? '<span class="chip info">Prueba</span>' : (g.tag === 'vip' ? '<span class="chip ok">VIP</span>' : '');
+    return '<div class="card"><div class="card-header"><div class="grow"><b>' + esc(g.name) + '</b><small><span>' + (g.phone ? esc(g.phone) : 'Sin WhatsApp') + '</span><span>' + money(g.tot) + '/mes</span>' + tChip + '</small></div>' + stChip + '</div>' +
+      g.it.map(function(x){
+        return '<div class="row ' + (x.u.paused ? 'paused' : '') + '">' + badge(x.c, 1) + '<div class="grow" onclick="editUser(\'' + x.c.id + '\',\'' + x.u.id + '\')"><b>' + esc(x.c.name) + '</b><small><span>' + money(x.u.amount) + '</span><span>Corte día ' + x.u.day + '</span></small></div>' + userChip(x.deb, x.u) + '<button class="mini" onclick="ticket(\'' + x.c.id + '\',\'' + x.u.id + '\')">Ticket</button></div>';
+      }).join('') +
+      '<div class="grid-2" style="margin-top:10px"><button class="btn" onclick="ticketCli(' + gi + ')"><i class="icon">receipt</i> Estado de cuenta</button><button class="btn g" onclick="openPortalPublish(' + gi + ')"><i class="icon">public</i> Portal / Etiqueta</button></div></div>';
+  }).join('');
+}
+
+function cliData(g){
+  var pastDebt = 0, curDue = 0;
+  var rows = g.it.map(function(x){
+    var b = getBillingInfo(x.u); pastDebt += b.pastDebt; curDue += b.curDue;
+    return { cid: x.c.id, svc: x.c.name, pfl: x.u.pfl || '', pin: x.u.pin || '', amt: +x.u.amount || 0, pastDebt: b.pastDebt, curDue: b.curDue, totalPay: b.totalPay, statusText: b.statusText, shortStatus: b.shortStatus, badgeCls: b.badgeCls, nextCycleText: b.nextCycleText, isUpToDate: b.isUpToDate, paused: !!x.u.paused, logo: x.c.logo || '', mode: x.c.mode || 'cred', login: x.c.login || '', hasPw: !!x.c.pw, pw: '' };
+  });
+  var s = S.settings || {};
+  return { name: g.name, phone: g.phone || '', tag: (S.clientTags && S.clientTags[g.name.toLowerCase()]) || '', date: new Date().toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' }), rows: rows, tot: g.tot, pastDebt: pastDebt, curDue: curDue, totalPay: pastDebt + curDue, incPw: false, owner: s.owner || '', bank: s.bank || '', clabe: s.clabe || '', mpLink: s.mpLink || '', adminWa: s.adminWa || '' };
+}
+
+function ticket(cid, id){
+  var c = findAcc(cid), u = c.users.filter(function(x){ return x.id === id; })[0], bill = getBillingInfo(u);
+  TB = 'ESTADO DE CUENTA — Passly\nCliente: ' + u.name + '\nServicio: ' + c.name + (u.pfl ? ' (' + u.pfl + (u.pin ? ' • PIN ' + u.pin : '') + ')' : '') + '\nEstatus: ' + bill.statusText + '\n\n• Saldo vencido: ' + money(bill.pastDebt) + '\n• Ciclo actual: ' + money(bill.curDue) + '\n• Total a pagar: ' + (bill.isUpToDate ? '$0 (Al corriente)' : money(bill.totalPay)) + payInfo();
+  TK = TB; PH = u.phone || '';
+  var opt = (c.mode !== 'fam' && (c.login || c.pw)) ? (c.pw && !KEY_CRYPTO ? '<button class="mini" style="margin-top:14px" onclick="withKey(function(){ticket(\'' + cid + '\',\'' + id + '\')})">Desbloquear para adjuntar clave</button>' : '<label class="chk"><input type="checkbox" id="inc" onchange="tkPw(\'' + cid + '\')"> Incluir usuario y contraseña</label>') : '';
+  openS('<h2>Estado de cuenta</h2><div class="tkc" style="white-space:pre-wrap;font-family:ui-monospace,monospace;font-size:13px" id="tk"></div>' + opt + '<div class="acts"><button class="btn g" onclick="copyTxt(TK)"><i class="icon">content_copy</i> Copiar</button></div>' + (u.phone ? '<a class="btn w" id="wa" target="_blank" rel="noopener" style="margin-top:10px;display:flex" href="' + waLink(u.phone, TK) + '"><i class="icon">chat</i> Enviar por WhatsApp</a>' : ''));
+  showTk();
+}
+function tkPw(cid){ var c = findAcc(cid); if (!$('#inc').checked) { TK = TB; showTk(); return; } var add = function(p){ TK = TB + '\n\nAcceso:\n• Usuario: ' + (c.login || '-') + (p ? '\n• Contraseña: ' + p : ''); showTk(); }; if (c.pw) dec(c.pw).then(add); else add(''); }
+function waLink(p, t){ p = String(p || '').replace(/\D/g, ''); if (p.length === 10) p = '52' + p; return 'https://wa.me/' + p + '?text=' + encodeURIComponent(t); }
+function showTk(){ var el = $('#tk'); if (el) el.textContent = TK; var a = $('#wa'); if (a) a.href = waLink(PH, TK); }
+function payInfo(){ var s = S.settings || {}, a = []; if (s.owner) a.push('Titular: ' + s.owner); if (s.bank) a.push('Banco: ' + s.bank); if (s.clabe) a.push('CLABE/Cuenta: ' + s.clabe); if (s.mpLink) a.push('Mercado Pago: ' + s.mpLink); return a.length ? '\n\nDatos de pago:\n' + a.join('\n') : ''; }
+function toast(t){ var e = document.createElement('div'); e.className = 'toast'; e.textContent = t; document.body.appendChild(e); setTimeout(function(){ e.remove(); }, 2300); }
+function copyTxt(t){ vib(30); if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(function(){ toast('Copiado'); }); else { var a = document.createElement('textarea'); a.value = t; document.body.appendChild(a); a.select(); try { document.execCommand('copy'); toast('Copiado'); } catch(e){} a.remove(); } }
+function pwGet(id, fn){ var c = findAcc(id); withKey(function(){ dec(c.pw).then(fn); }); }
+function pwView(id){ var e = $('#pw-' + id); if (e.dataset.v) { e.textContent = '••••••••'; delete e.dataset.v; return; } pwGet(id, function(t){ e.textContent = t; e.dataset.v = "1"; setTimeout(function(){ e.textContent = '••••••••'; delete e.dataset.v; }, 15000); }); }
+function pwCopy(id){ pwGet(id, copyTxt); }
+
+function welcomeCard(cid, id){
+  var c = findAcc(cid), u = c.users.filter(function(x){ return x.id === id; })[0];
+  var showModal = function(pwText){
+    var text = '🎉 ¡Bienvenido a tu suscripción!\nHola ' + u.name + ', ya está listo tu acceso:\n\n• Servicio: ' + c.name + '\n' + (u.pfl ? '• Perfil: ' + u.pfl + (u.pin ? ' (PIN ' + u.pin + ')\n' : '\n') : '') + (c.mode !== 'fam' ? '• Usuario: ' + (c.login || '-') + '\n• Contraseña: ' + (pwText || '••••••••') + '\n' : '') + '• Mensualidad: ' + money(u.amount) + '\n• Día de cobro: ' + u.day + ' de cada mes' + payInfo();
+    openS('<h2>Tarjeta de bienvenida</h2><div class="tkc" style="white-space:pre-wrap;font-family:ui-monospace,monospace;font-size:13px">' + esc(text) + '</div><div class="acts"><button class="btn g" onclick="copyTxt(decodeURIComponent(\'' + encodeURIComponent(text) + '\'))">Copiar</button></div>' + (u.phone ? '<a class="btn w" target="_blank" rel="noopener" style="margin-top:10px;display:flex" href="' + waLink(u.phone, text) + '"><i class="icon">chat</i> WhatsApp</a>' : ''));
+  };
+  if (c.mode !== 'fam' && c.pw) { if (KEY_CRYPTO) dec(c.pw).then(showModal); else withKey(function(){ dec(c.pw).then(showModal); }); } else showModal('');
+}
+function pwdNotice(cid){
+  var c = findAcc(cid);
+  var showModal = function(pwText){
+    var text = '📢 AVISO DE ACTUALIZACIÓN DE ACCESO\nServicio: ' + c.name + '\n\n👤 Usuario: ' + (c.login || '-') + '\n🔑 Nueva contraseña: ' + (pwText || '-');
+    openS('<h2>Aviso de nueva contraseña</h2><div class="tkc" style="white-space:pre-wrap;font-family:ui-monospace,monospace;font-size:13px">' + esc(text) + '</div><div class="acts"><button class="btn g" onclick="copyTxt(decodeURIComponent(\'' + encodeURIComponent(text) + '\'))">Copiar</button></div>');
+  };
+  if (c.pw) { if (KEY_CRYPTO) dec(c.pw).then(showModal); else withKey(function(){ dec(c.pw).then(showModal); }); } else showModal('');
+}
+
+function cliText(){
+  var d = CT, lines = ['ESTADO DE CUENTA — Passly', 'Cliente: ' + d.name, 'Fecha: ' + d.date, '', 'Detalle de servicios:'];
+  d.rows.forEach(function(r){ lines.push('• ' + r.svc + (r.pfl ? ' [' + r.pfl + ']' : '') + ': ' + (r.isUpToDate ? 'Al corriente — Próx: ' + r.nextCycleText : money(r.totalPay) + ' (' + r.statusText + ')')); });
+  lines.push('', 'Saldo vencido: ' + money(d.pastDebt), 'Ciclo actual: ' + money(d.curDue), 'TOTAL A PAGAR: ' + (d.totalPay > 0 ? money(d.totalPay) : '$0 (Al corriente)'));
+  if (d.incPw) { var creds = d.rows.filter(function(r){ return r.mode !== 'fam' && (r.login || r.pw); }); if (creds.length) { lines.push('', 'Accesos:'); creds.forEach(function(r){ lines.push('— ' + r.svc + ': ' + (r.login || '-') + (r.pw ? ' / ' + r.pw : '')); }); } }
+  return lines.join('\n') + payInfo();
+}
+async function toggleCliPw(){ var chk = $('#incCli'); if (!chk || !chk.checked) { CT.incPw = false; updateCliUI(); return; } for (var i = 0; i < CT.rows.length; i++) { var r = CT.rows[i]; if (r.mode !== 'fam' && r.hasPw && !r.pw) { var c = findAcc(r.cid); if (c && c.pw) r.pw = await dec(c.pw); } } CT.incPw = true; updateCliUI(); }
+function updateCliUI(){ var a = $('#waCli'); if (a && CT.phone) a.href = waLink(CT.phone, cliText()); }
+function ticketCli(i){
+  var g = CL[i]; if (!g) return; CT = cliData(g); var d = CT;
+  var hasAnyCred = d.rows.some(function(r){ return r.mode !== 'fam' && (r.login || r.hasPw); });
+  var needsUnlock = d.rows.some(function(r){ return r.mode !== 'fam' && r.hasPw; }) && !KEY_CRYPTO;
+  var optCred = hasAnyCred ? (needsUnlock ? '<button class="mini" style="margin-top:12px" onclick="withKey(function(){ticketCli(' + i + ')})">Desbloquear claves</button>' : '<label class="chk"><input type="checkbox" id="incCli" onchange="toggleCliPw()"> Incluir correos y contraseñas</label>') : '';
+  openS('<h2>Estado de cuenta — ' + esc(d.name) + '</h2><div class="tkc">' + d.rows.map(function(r){ return '<div class="tr">' + badge({ logo: r.logo, name: r.svc }, 1) + '<div class="grow"><b>' + esc(r.svc) + '</b><small>' + esc(r.statusText) + '</small></div><div class="ta"><b>' + (r.isUpToDate ? '$0' : money(r.totalPay)) + '</b><span class="chip ' + r.badgeCls + '">' + esc(r.shortStatus) + '</span></div></div>'; }).join('') + '<div class="tt"><span>Saldo vencido</span><b>' + money(d.pastDebt) + '</b></div><div class="tt"><span>Ciclo actual</span><b>' + money(d.curDue) + '</b></div><div class="tt total"><span>Total a pagar</span><b style="color:' + (d.totalPay > 0 ? 'var(--primary)' : 'var(--ok)') + '">' + (d.totalPay > 0 ? money(d.totalPay) : '$0') + '</b></div></div>' + optCred + '<div class="acts"><button class="btn g" onclick="copyTxt(cliText())"><i class="icon">content_copy</i> Copiar</button></div>' + (g.phone ? '<a class="btn w" id="waCli" target="_blank" rel="noopener" style="margin-top:10px;display:flex" href="' + waLink(g.phone, cliText()) + '"><i class="icon">chat</i> WhatsApp</a>' : ''));
+}
+function ticketCliFor(cid, uid){ var c = findAcc(cid), u = c.users.filter(function(x){ return x.id === uid; })[0], k = u.name.trim().toLowerCase(); clients(); var idx = CL.findIndex(function(g){ return g.name.toLowerCase() === k; }); if (idx >= 0) ticketCli(idx); }
+
+function sets(){
+  var s = S.settings || {};
+  return appLogo() + '<h1>Ajustes</h1><p>Datos de cobro, Mercado Pago y sesión</p>' +
+    '<div class="card" style="margin-top:16px">' +
+      '<label>Nombre del titular</label><input id="s1" value="' + esc(s.owner || '') + '">' +
+      '<label>Banco receptor</label><input id="s2" value="' + esc(s.bank || '') + '">' +
+      '<label>CLABE o tarjeta</label><input id="s3" inputmode="numeric" value="' + esc(s.clabe || '') + '">' +
+      '<label>Link de pago Mercado Pago (opcional)</label><input id="sMp" value="' + esc(s.mpLink || '') + '" placeholder="https://link.mercadopago.com.mx/...">' +
+      '<label>Tu WhatsApp de soporte (10 dígitos)</label><input id="sWa" type="tel" inputmode="numeric" value="' + esc(s.adminWa || '') + '" placeholder="Para que tus clientes te contacten">' +
+      '<button class="btn" style="width:100%;margin-top:18px" onclick="saveSets()"><i class="icon">save</i> Guardar datos de pago</button>' +
+    '</div>' +
+    '<div class="card"><button class="btn g" style="width:100%;margin-bottom:10px" onclick="openVault()"><i class="icon">lock_open</i> Bóveda de contraseñas</button><button class="btn g" style="width:100%;margin-bottom:10px" onclick="backup()"><i class="icon">cloud_sync</i> Respaldo JSON</button><button class="btn d" style="width:100%" onclick="doLogout()"><i class="icon">logout</i> Cerrar sesión</button></div>' +
+    '<div style="text-align:center;padding:24px;color:var(--mu);font-size:12px">Passly v5.0 • Portal Interactivo</div>';
+}
+function saveSets(){ S.settings = { owner: $('#s1').value.trim(), bank: $('#s2').value.trim(), clabe: $('#s3').value.trim(), mpLink: $('#sMp').value.trim(), adminWa: $('#sWa').value.replace(/\D/g, '') }; save(); toast('Ajustes guardados'); render(); }
+function backup(){ openS('<h2>Respaldo JSON</h2><textarea id="bkText">' + esc(JSON.stringify(S)) + '</textarea><div class="acts"><button class="btn g" onclick="copyTxt($(\'#bkText\').value)">Copiar</button><button class="btn" onclick="imp()">Importar</button></div><p id="msg" style="margin-top:10px"></p>'); }
+function imp(){ try { var d = JSON.parse($('#bkText').value); if (!d || !Array.isArray(d.accounts)) throw 0; S = d; S.lastBackup = Date.now(); save(); closeS(); render(); toast('Datos restaurados'); } catch (e) { say('JSON inválido'); } }
+
+var SEL = '';
+var PLAT = [['netflix','Netflix','#e50914','N'],['hbo','Max','#002be7','max'],['prime','Prime Video','#00a8e1','prime'],['disney','Disney+','#113ccf','D+'],['spotify','Spotify','#1db954','S'],['youtube','YouTube','#ff0033','▶'],['apple','Apple TV+','#2c2c31','tv+'],['paramount','Paramount+','#0064ff','P+'],['crunchy','Crunchyroll','#f47521','CR'],['vix','ViX','#ff6a00','ViX'],['canva','Canva','#00a7b0','C'],['google','Google One','#4285f4','1']];
+function brand(l, n){ for (var i = 0; i < PLAT.length; i++) if (PLAT[i][0] === l) return { c: PLAT[i][2], t: PLAT[i][3] }; return { c: '#242424', t: (String(n||'?').trim().charAt(0).toUpperCase() || '?') }; }
+function badge(c, sm){ var l = c.logo || ''; if (l.indexOf('data:') === 0) return '<img class="lg' + (sm ? ' sm' : '') + '" src="' + l + '" alt="">'; var b = brand(l, c.name); return '<span class="lg' + (sm ? ' sm' : '') + '" style="background:' + b.c + '">' + esc(b.t) + '</span>'; }
+function platPicker(){ var h = '<div class="plat">'; PLAT.forEach(function(p){ h += '<button type="button" class="pb' + (SEL === p[0] ? ' on' : '') + '" onclick="pickP(\'' + p[0] + '\')"><span class="lg sm" style="background:' + p[2] + '">' + esc(p[3]) + '</span>' + esc(p[1]) + '</button>'; }); return h + '</div><div style="display:flex;gap:8px;margin-top:10px"><button type="button" class="mini" onclick="document.getElementById(\'lf\').click()">Subir logo</button><button type="button" class="mini" onclick="pickP(\'\')">Quitar</button><input id="lf" type="file" accept="image/*" style="display:none" onchange="upLogo(this)"></div>'; }
+function pickP(k){ SEL = k; var btns = document.querySelectorAll('.plat .pb'); for (var i = 0; i < btns.length; i++) btns[i].className = 'pb' + (PLAT[i][0] === k ? ' on' : ''); }
+function upLogo(inp){ var f = inp.files && inp.files[0]; if (!f) return; var r = new FileReader(); r.onload = function(){ var im = new Image(); im.onload = function(){ var c = document.createElement('canvas'); c.width = c.height = 96; var x = c.getContext('2d'), m = Math.min(im.width, im.height); x.drawImage(im, (im.width - m) / 2, (im.height - m) / 2, m, m, 0, 0, 96, 96); pickP(c.toDataURL('image/png')); toast('Logo listo'); }; im.src = r.result; }; r.readAsDataURL(f); }
+function modeSw(){ var c = $('#cred'); if (c) c.style.display = $('#f12').value === 'fam' ? 'none' : ''; }
+
+/* ARRANQUE FIREBASE */
+if (FB_READY && auth) {
+  auth.onAuthStateChanged(async function(user){
+    CUR_USER = user;
+    if (!user) { USER_ROLE = null; renderLogin(); return; }
+    if (user.uid === ADMIN_UID) {
+      USER_ROLE = 'admin';
+      document.body.style.paddingBottom = '120px';
+      $('#mainNav').style.display = 'flex';
+      try {
+        var doc = await db.collection('admin').doc('datos').get();
+        if (doc.exists) { S = doc.data(); if (!S.portalMap) S.portalMap = {}; if (!S.clientTags) S.clientTags = {}; localStorage.setItem(KEY, JSON.stringify(S)); }
+        else if (S.accounts && S.accounts.length) { save(); }
+        syncCatalog();
+        startAdminReqListener();
+      } catch (e) { console.error(e); }
+      render();
+    } else {
+      USER_ROLE = 'client';
+      try {
+        var pdoc = await db.collection('portal').doc(user.uid).get();
+        PORTAL_DATA = pdoc.exists ? pdoc.data() : null;
+        var cdoc = await db.collection('catalog').doc('public').get();
+        CATALOG_DATA = (cdoc.exists && cdoc.data().items) ? cdoc.data().items : [];
+        await loadClientReqs();
+      } catch (e) { PORTAL_DATA = null; }
+      renderClientPortal();
+    }
+  });
+} else { renderLogin(); }
+
+if ('serviceWorker' in navigator) { window.addEventListener('load', function(){ navigator.serviceWorker.register('./sw.js').catch(function(){}); }); }
+</script>
+</body>
+</html>
