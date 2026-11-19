@@ -1,4 +1,4 @@
-const CACHE_NAME = 'passly-v3.3';
+const CACHE_NAME = 'passly-v4.0';
 const urlsToCache = [
   './',
   './index.html',
