@@ -380,9 +380,16 @@ function startClientNoticeListener(){
   unsubNotices = db.collection('notices').where('uid', '==', CUR_USER.uid).where('read', '==', false).onSnapshot(function(snap){
     var list = snap.docs.map(function(doc){ return Object.assign({ id: doc.id }, doc.data()); }).sort(function(a,b){ return (b.createdAt||0) - (a.createdAt||0); });
     if (noticesInitialized && list.length > CLIENT_NOTICES.length && 'Notification' in window && Notification.permission === 'granted') {
-      var newest = list[0];
-      try { new Notification('Passly: ' + (newest.title || 'Nuevo aviso'), { body: newest.body || '', icon: 'icon-192.png' }); } catch(e){}
+  var newest = list[0];
+  var title = 'Passly: ' + (newest.title || 'Nuevo aviso');
+  var opts = { body: newest.body || '', icon: 'icon-192.png', vibrate: [200, 100, 200] };
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.ready.then(function(reg){
+      reg.showNotification(title, opts);
+    }).catch(function(){});
+  }
     }
+    
     CLIENT_NOTICES = list;
     noticesInitialized = true;
     if (USER_ROLE === 'client') renderClientPortal();
