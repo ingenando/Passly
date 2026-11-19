@@ -1,31 +1,47 @@
-const CACHE_NAME = 'passly-v4.1';
-const urlsToCache = [
+const CACHE_NAME = 'passly-v4-auto';
+const ASSETS = [
   './',
   './index.html',
   './manifest.json',
-  './logo.png',
-  './icon-192.png',
-  './icon-512.png'
+  './icon-192.png'
 ];
 
-self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache))
+// 1. Instalar y activar de inmediato sin esperar
+self.addEventListener('install', (e) => {
+  self.skipWaiting();
+  e.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS).catch(() => {}))
   );
 });
 
-self.addEventListener('fetch', event => {
-  event.respondWith(
-    caches.match(event.request).then(response => response || fetch(event.request))
+// 2. Borrar cualquier caché vieja y tomar control de la PWA al instante
+self.addEventListener('activate', (e) => {
+  e.waitUntil(
+    caches.keys().then((keys) =>
+      Promise.all(
+        keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k))
+      )
+    ).then(() => self.clients.claim())
   );
 });
 
-self.addEventListener('activate', event => {
-  event.waitUntil(
-    caches.keys().then(keys => Promise.all(
-      keys.map(key => {
-        if (key !== CACHE_NAME) return caches.delete(key);
+// 3. Primero internet; si falla (offline), usa la caché. Ignora peticiones de Firebase.
+self.addEventListener('fetch', (e) => {
+  if (e.request.method !== 'GET') return;
+  const url = e.request.url;
+  if (url.includes('googleapis.com') || url.includes('firebase') || url.includes('gstatic.com')) {
+    return;
+  }
+
+  e.respondWith(
+    fetch(e.request)
+      .then((res) => {
+        if (res && res.status === 200) {
+          const clone = res.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(e.request, clone));
+        }
+        return res;
       })
-    ))
+      .catch(() => caches.match(e.request))
   );
 });
