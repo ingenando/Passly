@@ -1,0 +1,2230 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=0">
+<meta name="theme-color" id="metaTheme" content="#f4f6fb">
+<title>Passly — Gestor de Suscripciones y Cobros</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<style>
+:root{
+  --bg: #f4f6fb;
+  --sidebar-bg: #eef2ff;
+  --surface: #ffffff;
+  --surface-c: #f8fafc;
+  --surface-high: #eef2f6;
+  --surface-highest: #e2e8f0;
+  --line: #e2e8f0;
+  --line-subtle: #f1f5f9;
+  --tx: #0f172a;
+  --mu: #64748b;
+  --primary: #2563eb;
+  --primary-2: #7c3aed;
+  --primary-container: rgba(37,99,235,0.10);
+  --on-primary: #ffffff;
+  --ok: #059669;
+  --ok-bg: #dcfce7;
+  --bad: #dc2626;
+  --bad-bg: #fee2e2;
+  --warn: #d97706;
+  --warn-bg: #fef3c7;
+  --mp: #009ee3;
+  --shadow-sm: 0 2px 10px rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 10px 30px rgba(15, 23, 42, 0.07);
+  --hero-grad: linear-gradient(135deg, rgba(37,99,235,0.12) 0%, rgba(124,58,237,0.10) 55%, var(--surface) 100%);
+  color-scheme: light;
+  box-sizing: border-box;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{background:var(--bg);scroll-padding-top:env(safe-area-inset-top,0px)}
+body{
+  margin:0;
+  min-height:100vh;
+  min-height:100dvh;
+  background:var(--bg);
+  color:var(--tx);
+  font:15px/1.45 'Plus Jakarta Sans',system-ui,-apple-system,sans-serif;
+  padding-bottom:110px;
+  transition:background .2s ease,color .2s ease;
+}
+body.landing-mode{padding-bottom:32px}
+body.landing-mode main{max-width:760px;margin:0 auto;padding:14px 16px 36px}
+
+/* LAYOUT SHELL ADMIN & CLIENTE */
+.app-shell{display:flex;min-height:100vh;min-height:100dvh}
+.sidebar{
+  display:none;
+  width:248px;
+  flex:none;
+  background:var(--sidebar-bg);
+  border-right:1px solid var(--line);
+  padding:22px 14px;
+  flex-direction:column;
+  justify-content:space-between;
+  position:sticky;
+  top:0;
+  height:100vh;
+}
+@media (min-width: 880px){
+  body.admin-mode{padding-bottom:24px}
+  .sidebar{display:flex}
+  nav.mobile-nav{display:none !important}
+}
+.sb-brand{display:flex;align-items:center;gap:10px;padding:4px 10px 22px}
+.sb-brand img{height:34px;border-radius:10px;object-fit:contain}
+.sb-brand b{font-size:20px;font-weight:800;letter-spacing:-.5px;color:var(--tx)}
+.sb-nav{display:flex;flex-direction:column;gap:4px}
+.sb-item{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  width:100%;border:0;background:transparent;color:var(--mu);
+  padding:11px 14px;border-radius:14px;
+  font:600 14px 'Plus Jakarta Sans',sans-serif;cursor:pointer;text-align:left;
+  transition:all .15s ease;
+}
+.sb-item:hover{background:var(--primary-container);color:var(--tx)}
+.sb-item.on{
+  background:linear-gradient(90deg, var(--primary-container) 0%, rgba(124,58,237,0.08) 100%);
+  color:var(--primary);font-weight:700;
+}
+.sb-item-left{display:flex;align-items:center;gap:11px}
+.sb-pill-cnt{
+  background:var(--primary-2);color:#fff;font-size:11px;font-weight:800;
+  padding:2px 8px;border-radius:9999px;min-width:22px;text-align:center;
+}
+.sb-foot{padding-top:14px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:6px}
+
+.workspace{flex:1;min-width:0;display:flex;flex-direction:column}
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:14px 18px;
+  background:var(--surface);
+  border-bottom:1px solid var(--line);
+  position:sticky;top:0;z-index:30;
+}
+.tb-brand-mob{display:flex;align-items:center;gap:9px}
+.tb-brand-mob img{height:32px;border-radius:9px}
+.tb-brand-mob b{font-size:18px;font-weight:800;letter-spacing:-.4px}
+@media (min-width: 880px){ .tb-brand-mob{display:none} }
+
+.tb-search{flex:1;max-width:440px;position:relative;display:none}
+@media (min-width: 600px){ .tb-search{display:block} }
+.tb-search i{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--mu);font-size:18px;pointer-events:none}
+.tb-search input{
+  width:100%;background:var(--surface-c);border:1px solid var(--line);
+  border-radius:9999px;padding:9px 16px 9px 40px;font-size:13px;color:var(--tx);
+}
+
+.tb-right{display:flex;align-items:center;gap:8px}
+.icon-circle{
+  position:relative;width:38px;height:38px;border-radius:50%;
+  border:1px solid var(--line);background:var(--surface-c);color:var(--tx);
+  display:grid;place-items:center;cursor:pointer;transition:all .15s;
+}
+.icon-circle:active{transform:scale(.95)}
+.icon-circle .dot{
+  position:absolute;top:6px;right:7px;width:8px;height:8px;border-radius:50%;background:var(--primary-2);
+}
+.user-pill{
+  display:flex;align-items:center;gap:8px;padding:4px 10px 4px 5px;
+  border-radius:9999px;border:1px solid var(--line);background:var(--surface-c);
+  cursor:pointer;
+}
+.avatar-circle{
+  width:30px;height:30px;border-radius:50%;
+  background:linear-gradient(135deg, var(--primary), var(--primary-2));
+  color:#fff;font:700 12px 'Plus Jakarta Sans',sans-serif;
+  display:grid;place-items:center;
+}
+.user-pill-txt{display:none;text-align:left;line-height:1.15}
+@media (min-width: 520px){ .user-pill-txt{display:block} }
+.user-pill-txt b{display:block;font-size:12px;color:var(--tx)}
+.user-pill-txt small{font-size:10px;color:var(--mu)}
+
+.content-area{width:100%;max-width:980px;margin:0 auto;padding:20px 16px 28px}
+body.client-mode .content-area{max-width:960px}
+
+h1{font-size:25px;font-weight:800;letter-spacing:-.5px;margin:0 0 4px;color:var(--tx)}
+h2{font-size:18px;font-weight:700;letter-spacing:-.3px;margin:20px 0 12px;color:var(--tx)}
+p{margin:0;color:var(--mu);font-size:14px}
+
+/* HERO & KPI CARDS V7 */
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+.kpi-grid-4{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+@media (min-width: 720px){ .kpi-grid-4{grid-template-columns:repeat(4, 1fr);gap:14px;} }
+
+.kpi-grid-3{display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:22px}
+@media (min-width: 640px){ .kpi-grid-3{grid-template-columns:repeat(3, 1fr);gap:14px;} }
+
+.kpi-card{
+  background:var(--surface);border:1px solid var(--line);border-radius:22px;
+  padding:16px;box-shadow:var(--shadow-sm);position:relative;overflow:hidden;
+}
+.kpi-card.highlight{background:var(--hero-grad);border-color:rgba(37,99,235,0.25)}
+.kpi-top{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.kpi-ico{
+  width:38px;height:38px;border-radius:12px;flex:none;
+  display:grid;place-items:center;font-size:20px;
+}
+.kpi-ico.blue{background:rgba(37,99,235,0.12);color:#2563eb}
+.kpi-ico.purple{background:rgba(124,58,237,0.12);color:#7c3aed}
+.kpi-ico.green{background:rgba(5,150,105,0.12);color:#059669}
+.kpi-ico.amber{background:rgba(217,119,6,0.12);color:#d97706}
+.kpi-label{font-size:12px;font-weight:600;color:var(--mu)}
+.kpi-val{font-size:24px;font-weight:800;letter-spacing:-.6px;font-variant-numeric:tabular-nums;color:var(--tx);line-height:1.15}
+.kpi-sub{margin-top:6px;font-size:12px;font-weight:600;color:var(--mu);display:flex;align-items:center;gap:6px}
+
+/* CLIENT HERO WAVE */
+.client-hero{
+  position:relative;overflow:hidden;
+  background:var(--surface);border:1px solid var(--line);border-radius:26px;
+  padding:24px 20px;margin-bottom:18px;box-shadow:var(--shadow-sm);
+}
+.client-hero::after{
+  content:'';position:absolute;right:-60px;top:-40px;width:300px;height:240px;
+  background:radial-gradient(circle at 30% 40%, rgba(124,58,237,0.22), rgba(37,99,235,0.16) 55%, transparent 75%);
+  border-radius:50%;pointer-events:none;
+}
+.client-kicker{font-size:11px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--mu);margin-bottom:6px}
+.client-nav-pills{
+  display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:16px;scrollbar-width:none;
+}
+.client-nav-pills::-webkit-scrollbar{display:none}
+.c-pill{
+  flex:none;display:inline-flex;align-items:center;gap:6px;
+  border:1px solid var(--line);background:var(--surface);color:var(--mu);
+  padding:9px 15px;border-radius:9999px;font:600 13px 'Plus Jakarta Sans',sans-serif;cursor:pointer;
+}
+.c-pill.on{background:var(--primary-container);border-color:var(--primary);color:var(--primary);font-weight:700}
+
+.subs-grid{display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:20px}
+@media (min-width: 640px){ .subs-grid{grid-template-columns:repeat(2, 1fr);} }
+@media (min-width: 880px){ .subs-grid{grid-template-columns:repeat(3, 1fr);} }
+
+.sub-card{
+  background:var(--surface);border:1px solid var(--line);border-radius:22px;
+  padding:18px;box-shadow:var(--shadow-sm);display:flex;flex-direction:column;justify-content:space-between;gap:12px;
+}
+.sub-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.sub-card-title{font-size:17px;font-weight:800;color:var(--tx);margin:10px 0 2px}
+.sub-card-meta{font-size:12px;color:var(--mu)}
+.status-dot{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:4px 10px;border-radius:9999px}
+.status-dot::before{content:'';width:7px;height:7px;border-radius:50%;background:currentColor}
+.status-dot.ok{background:var(--ok-bg);color:var(--ok)}
+.status-dot.bad{background:var(--bad-bg);color:var(--bad)}
+.status-dot.warn{background:var(--warn-bg);color:var(--warn)}
+.status-dot.info{background:var(--primary-container);color:var(--primary)}
+
+.client-bottom-grid{display:grid;grid-template-columns:1fr;gap:14px}
+@media (min-width: 720px){ .client-bottom-grid{grid-template-columns:1.35fr 1fr;} }
+.help-card{
+  background:var(--hero-grad);border:1px solid var(--line);border-radius:24px;
+  padding:22px;display:flex;flex-direction:column;justify-content:space-between;gap:16px;
+}
+
+/* BANNERS & CARDS */
+.banner-alert{background:var(--bad-bg);border:1px solid var(--bad);color:var(--bad);padding:14px 16px;border-radius:18px;font-size:13px;font-weight:600;margin-bottom:14px;display:flex;align-items:flex-start;gap:10px}
+.banner-warn{background:var(--warn-bg);border:1px solid var(--warn);color:var(--warn);padding:14px 16px;border-radius:18px;font-size:13px;font-weight:600;margin-bottom:14px;display:flex;align-items:flex-start;gap:10px}
+.banner-info{background:var(--primary-container);border:1px solid var(--primary);color:var(--primary);padding:14px 16px;border-radius:18px;font-size:13px;font-weight:600;margin-bottom:14px;display:flex;align-items:flex-start;gap:10px}
+.banner-ok{background:var(--ok-bg);border:1px solid var(--ok);color:var(--ok);padding:14px 16px;border-radius:18px;font-size:13px;font-weight:600;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.notice-card{background:var(--surface);border:1px solid var(--primary);border-radius:18px;padding:14px 16px;margin-bottom:12px;box-shadow:var(--shadow-sm)}
+
+.top-actions{display:flex;gap:8px;margin:0 0 18px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:9999px;padding:11px 18px;font:700 13px 'Plus Jakarta Sans',sans-serif;background:var(--primary);color:var(--on-primary);cursor:pointer;transition:all .15s ease;text-decoration:none}
+.btn:active{transform:scale(0.97);opacity:.9}
+.btn:disabled{opacity:.65;cursor:not-allowed;transform:none}
+.btn.g{background:var(--surface);color:var(--tx);border:1px solid var(--line)}
+.btn.d{background:var(--bad-bg);color:var(--bad);border:1px solid var(--bad)}
+.btn.w{background:#25d366;color:#032912}
+.btn.mp{background:var(--mp);color:#fff}
+.btn.ok{background:var(--ok-bg);color:var(--ok);border:1px solid var(--ok)}
+.btn.subtle{background:var(--surface);border:1px solid var(--line);color:var(--mu);padding:8px 14px;border-radius:9999px;font-size:13px}
+
+.strip{display:grid;grid-template-columns:1fr 1fr 1fr;background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:16px 8px;margin-bottom:18px;box-shadow:var(--shadow-sm)}
+.strip div{text-align:center;border-right:1px solid var(--line-subtle);padding:0 4px}
+.strip div:last-child{border:0}
+.strip b{display:block;font-size:18px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--tx)}
+.strip small{color:var(--mu);font-size:12px;font-weight:600}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:16px;margin-bottom:14px;position:relative;box-shadow:var(--shadow-sm)}
+.card-header{display:flex;align-items:center;gap:12px}
+.card-header .grow b{font-size:16px;font-weight:700}
+
+.logo-strip{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px solid var(--line-subtle)}
+.lg.xs{width:26px;height:26px;border-radius:8px;font-size:10px}
+
+.subtabs{display:flex;gap:4px;background:var(--surface-c);padding:4px;border-radius:16px;margin:12px 0 16px;border:1px solid var(--line)}
+.subtab{flex:1;border:0;background:transparent;color:var(--mu);font:600 12px 'Plus Jakarta Sans',sans-serif;padding:9px 4px;border-radius:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;transition:all .15s ease}
+.subtab.on{background:var(--surface);color:var(--primary);box-shadow:var(--shadow-sm)}
+
+.filter-bar{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;margin-bottom:14px;scrollbar-width:none}
+.filter-bar::-webkit-scrollbar{display:none}
+.f-pill{flex:none;border:1px solid var(--line);background:var(--surface);color:var(--mu);border-radius:9999px;padding:7px 14px;font:600 12px 'Plus Jakarta Sans',sans-serif;cursor:pointer}
+.f-pill.on{background:var(--primary-container);border-color:var(--primary);color:var(--primary)}
+
+.search-box{position:relative;margin-bottom:12px}
+.search-box i{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--mu);font-size:18px;pointer-events:none}
+.search-box input{padding-left:40px;border-radius:9999px;padding-top:10px;padding-bottom:10px;font-size:14px}
+
+.row{display:flex;flex-wrap:wrap;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:12px 14px;margin-bottom:8px;box-shadow:var(--shadow-sm)}
+.row.paused{opacity:.65;border-style:dashed}
+.grow{flex:1 1 100%;min-width:0;cursor:pointer;margin-bottom:4px}
+@media (min-width: 540px){ .grow{flex:1;margin-bottom:0;} }
+.grow b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:15px;color:var(--tx)}
+.grow small{color:var(--mu);font-size:13px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:2px}
+.row-actions{display:flex;align-items:center;gap:8px;width:100%;justify-content:flex-start}
+@media (min-width: 540px){ .row-actions{width:auto;justify-content:flex-end;} }
+
+.chip{font-size:11px;font-weight:700;padding:4px 10px;border-radius:9999px;background:var(--surface-high);color:var(--mu);white-space:nowrap;display:inline-flex;align-items:center;gap:4px}
+.chip.ok{background:var(--ok-bg);color:var(--ok)}
+.chip.bad{background:var(--bad-bg);color:var(--bad)}
+.chip.warn{background:var(--warn-bg);color:var(--warn)}
+.chip.info{background:var(--primary-container);color:var(--primary)}
+
+.mini{border:1px solid var(--line);background:var(--surface-c);color:var(--tx);border-radius:9999px;padding:7px 12px;font:600 12px 'Plus Jakarta Sans',sans-serif;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;gap:4px}
+.mini:active{transform:scale(0.96)}
+.mini.d{border-color:var(--bad);color:var(--bad);background:var(--bad-bg)}
+.mini.ok{border-color:var(--ok);color:var(--ok);background:var(--ok-bg)}
+.mini.primary{border-color:var(--primary);color:var(--on-primary);background:var(--primary)}
+
+.add{width:100%;border:1px dashed var(--line);background:var(--surface-c);color:var(--primary);border-radius:16px;padding:12px;font:600 13px 'Plus Jakarta Sans',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;margin-top:6px}
+.empty{background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:32px 20px;text-align:center;box-shadow:var(--shadow-sm)}
+.empty p{margin-bottom:16px}
+
+/* NAVEGACIÓN FLOTANTE MÓVIL */
+nav.mobile-nav {
+  position: fixed;left: 50%;transform: translateX(-50%);bottom: 18px;
+  width: calc(100% - 24px);max-width: 420px;
+  background: var(--surface);backdrop-filter: blur(16px);-webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--line);border-radius: 9999px;
+  display: flex;justify-content: space-between;padding: 6px;z-index: 40;
+  box-shadow: var(--shadow-md);
+}
+.nav-btn {
+  display: flex;align-items: center;justify-content: center;gap: 5px;
+  padding: 10px 12px;border-radius: 9999px;border: 0;background: transparent;
+  color: var(--mu);font: 700 12px 'Plus Jakarta Sans', sans-serif;cursor: pointer;
+  transition: all .2s ease;position:relative;
+}
+.nav-btn .txt { display: none; }
+.nav-btn.on { background: var(--primary-container); color: var(--primary); }
+.nav-btn.on .txt { display: block; color: var(--primary); }
+.badge-dot{position:absolute;top:6px;right:8px;width:8px;height:8px;border-radius:50%;background:var(--bad)}
+
+#sheet{position:fixed;inset:0;display:none;z-index:50}
+#sheet.on{display:block}
+.bk{position:absolute;inset:0;background:rgba(15,23,42,0.65);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.pan{position:absolute;left:0;right:0;bottom:0;margin:auto;max-width:580px;max-height:90%;overflow-y:auto;background:var(--surface);border:1px solid var(--line);border-radius:28px 28px 0 0;padding:24px 20px calc(24px + env(safe-area-inset-bottom,0px));box-shadow:var(--shadow-md)}
+@media (min-width: 640px){
+  .pan{bottom:auto;top:50%;transform:translateY(-50%);border-radius:28px;max-height:86vh}
+}
+
+label{display:block;color:var(--mu);font-size:13px;font-weight:600;margin:14px 0 6px}
+input,textarea,select{width:100%;background:var(--surface-c);color:var(--tx);border:1px solid var(--line);border-radius:14px;padding:12px 14px;font:15px 'Plus Jakarta Sans',sans-serif;outline:none;transition:border-color .15s}
+input:focus,textarea:focus,select:focus{border-color:var(--primary)}
+input:disabled{opacity:.6}
+textarea{height:100px;font:13px ui-monospace,monospace}
+.inp-eye{display:flex;gap:8px;align-items:center}
+.inp-eye input{flex:1}
+.eye-btn{border:1px solid var(--line);background:var(--surface-c);color:var(--mu);border-radius:14px;width:46px;height:46px;flex:none;display:grid;place-items:center;cursor:pointer}
+.acts{display:flex;gap:10px;margin-top:20px}
+.acts .btn{flex:1}
+
+.vault{background:var(--surface-c);border:1px solid var(--line);border-radius:16px;padding:11px 12px;margin:0 0 10px;display:flex;flex-direction:column;gap:8px;font-size:13px}
+.vr{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.vr code{font-family:ui-monospace,monospace;color:var(--primary);font-size:13px;word-break:break-all}
+.lg{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;font:700 15px 'Plus Jakarta Sans',sans-serif;color:#fff;flex:none;object-fit:cover}
+.lg.sm{width:34px;height:34px;border-radius:10px;font-size:13px}
+.plat{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.pb{display:flex;align-items:center;gap:8px;background:var(--surface-c);border:1px solid var(--line);color:var(--tx);border-radius:14px;padding:8px 10px;font:600 13px 'Plus Jakarta Sans',sans-serif;cursor:pointer;text-align:left}
+.pb.on{border-color:var(--primary);background:var(--primary-container);color:var(--tx)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:100px;background:var(--tx);color:var(--surface);border:1px solid var(--line);padding:10px 18px;border-radius:9999px;z-index:90;font-size:13px;font-weight:600;box-shadow:var(--shadow-md)}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.chk{display:flex;align-items:center;gap:10px;font-size:14px;margin-top:14px;cursor:pointer;color:var(--tx)}
+.chk input{width:auto}
+.tkc{background:var(--surface-c);border:1px solid var(--line);border-radius:20px;padding:10px 16px;margin:14px 0 8px}
+.tr{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--line)}
+.tr:last-child{border:0}
+.ta{text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:3px}
+.tt{display:flex;justify-content:space-between;align-items:center;padding:8px 0}
+.tt span{color:var(--mu);font-size:14px}
+.tt b{font-size:16px;font-variant-numeric:tabular-nums;color:var(--tx)}
+.tt.total{border-top:1px solid var(--line);margin-top:6px;padding-top:12px}
+.tt.total b{font-size:20px}
+.icon{font-family:'Material Symbols Rounded',sans-serif;font-style:normal;vertical-align:middle;line-height:1}
+.code-box{background:var(--primary-container);border:1px dashed var(--primary);color:var(--primary);font:800 22px ui-monospace,monospace;letter-spacing:2px;text-align:center;padding:16px;border-radius:18px;margin:14px 0;word-break:break-all}
+
+/* SELECTOR DE TEMA Y ACENTO */
+.theme-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:6px}
+.th-btn{border:1px solid var(--line);background:var(--surface-c);color:var(--tx);border-radius:14px;padding:10px 8px;font:600 12px 'Plus Jakarta Sans',sans-serif;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px}
+.th-btn.on{border-color:var(--primary);background:var(--primary-container);color:var(--primary)}
+.th-dot{width:22px;height:22px;border-radius:50%;border:1px solid var(--line)}
+.swatch-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:8px}
+.sw{width:32px;height:32px;border-radius:50%;border:2px solid transparent;cursor:pointer;transition:transform .15s}
+.sw.on{border-color:var(--tx);transform:scale(1.12)}
+.sw-pick{width:36px;height:36px;padding:0;border-radius:50%;border:1px solid var(--line);background:transparent;cursor:pointer;overflow:hidden}
+
+/* LANDING Y OVERLAY DESENFOCADO DE LOGIN */
+.lp-shell{transition:filter .25s ease}
+.lp-shell.blurred{filter:blur(10px);pointer-events:none;user-select:none}
+.lp-nav{display:flex;align-items:center;justify-content:space-between;padding:6px 0 18px;gap:10px}
+.lp-brand{display:flex;align-items:center;gap:10px}
+.lp-brand img{height:38px;border-radius:10px}
+.lp-hero{background:var(--hero-grad);border:1px solid var(--line);border-radius:28px;padding:34px 22px;text-align:center;margin-bottom:22px;box-shadow:var(--shadow-sm)}
+.lp-badge{display:inline-flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--line);color:var(--primary);font-size:12px;font-weight:700;padding:6px 14px;border-radius:9999px;margin-bottom:14px}
+.lp-title{font-size:30px;line-height:1.18;font-weight:800;letter-spacing:-.6px;color:var(--tx);margin:0 0 12px}
+.lp-desc{font-size:14px;line-height:1.55;color:var(--mu);max-width:520px;margin:0 auto 22px}
+.lp-cta{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.lp-cta .btn{padding:13px 22px;font-size:14px}
+
+.feat-grid{display:grid;grid-template-columns:1fr;gap:12px;margin-top:14px}
+@media (min-width: 560px){ .feat-grid{grid-template-columns:1fr 1fr;} }
+.feat-card{background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:18px;box-shadow:var(--shadow-sm)}
+.feat-ico{width:40px;height:40px;border-radius:12px;background:var(--primary-container);color:var(--primary);display:grid;place-items:center;margin-bottom:10px}
+.feat-card b{display:block;font-size:15px;color:var(--tx);margin-bottom:4px}
+.feat-card p{font-size:13px;line-height:1.45;color:var(--mu)}
+
+.auth-overlay{
+  position:fixed;inset:0;z-index:60;
+  background:rgba(15,23,42,0.52);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  display:flex;align-items:center;justify-content:center;
+  padding:16px;overflow-y:auto;
+  animation:fadeInOverlay .2s ease;
+}
+@keyframes fadeInOverlay{from{opacity:0}to{opacity:1}}
+.g-card{
+  position:relative;overflow:hidden;width:100%;max-width:420px;
+  background:var(--surface);border:1px solid var(--line);
+  border-radius:28px;padding:30px 24px 24px;
+  box-shadow:var(--shadow-md);
+  animation:popCard .22s ease;
+}
+@keyframes popCard{from{opacity:0;transform:translateY(12px) scale(.98)}to{opacity:1;transform:none}}
+.g-close{position:absolute;top:14px;right:14px;width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:var(--surface-c);color:var(--mu);display:grid;place-items:center;cursor:pointer}
+.g-progress{position:absolute;top:0;left:0;right:0;height:3px;background:var(--primary-container);overflow:hidden}
+.g-progress::after{content:'';position:absolute;top:0;left:-40%;width:40%;height:100%;background:var(--primary);animation:passlyBar 1.1s infinite ease-in-out}
+@keyframes passlyBar{0%{left:-40%}100%{left:100%}}
+.spinner{width:16px;height:16px;border:2.5px solid rgba(128,128,128,0.3);border-top-color:currentColor;border-radius:50%;display:inline-block;animation:passlySpin .7s linear infinite}
+.spinner.lg-spin{width:34px;height:34px;border-width:3px;border-color:var(--primary-container);border-top-color:var(--primary)}
+@keyframes passlySpin{to{transform:rotate(360deg)}}
+@keyframes shakeInp{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.shake{animation:shakeInp .28s ease}
+
+.g-logo{display:flex;justify-content:center;margin-bottom:12px}
+.g-logo img{height:38px;border-radius:10px}
+.g-title{text-align:center;font-size:22px;font-weight:800;color:var(--tx);margin:0 0 6px}
+.g-sub{text-align:center;font-size:13px;color:var(--mu);margin:0 0 20px}
+.g-pill{display:inline-flex;align-items:center;gap:8px;margin:0 auto 18px;padding:6px 14px 6px 8px;background:var(--surface-c);border:1px solid var(--line);border-radius:9999px;color:var(--tx);font-size:13px;font-weight:600;cursor:pointer}
+.g-pill-wrap{display:flex;justify-content:center}
+.g-field{position:relative;margin-bottom:12px}
+.g-field input{width:100%;background:var(--surface-c);border:1px solid var(--line);border-radius:14px;padding:14px 16px;font-size:15px;color:var(--tx)}
+.g-field input:focus{border-color:var(--primary);box-shadow:0 0 0 1px var(--primary)}
+.g-actions{display:flex;align-items:center;justify-content:space-between;margin-top:20px;gap:10px}
+.g-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--primary);color:var(--on-primary);border:0;border-radius:9999px;padding:12px 22px;font:700 14px 'Plus Jakarta Sans',sans-serif;cursor:pointer;transition:opacity .15s}
+.g-btn:disabled{opacity:.7;cursor:not-allowed}
+.g-link{background:transparent;border:0;color:var(--primary);font:600 13px 'Plus Jakarta Sans',sans-serif;padding:8px 6px;border-radius:8px;cursor:pointer}
+.g-err{background:var(--bad-bg);border:1px solid var(--bad);color:var(--bad);padding:10px 12px;border-radius:12px;font-size:13px;margin-top:10px;display:flex;align-items:center;gap:8px}
+.g-hint{background:var(--surface-c);border:1px solid var(--line);color:var(--mu);padding:9px 12px;border-radius:12px;font-size:12px;margin-top:10px;display:flex;align-items:center;gap:8px}
+</style>
+</head>
+<body>
+<main id="app"></main>
+<nav class="mobile-nav" id="mainNav" style="display:none">
+  <button class="nav-btn" id="n1" onclick="go('home')"><i class="icon">home</i><span class="txt">Inicio</span></button>
+  <button class="nav-btn" id="n2" onclick="go('reqs')"><i class="icon">notifications_active</i><span class="txt">Solicitudes</span><span class="badge-dot" id="reqDot" style="display:none"></span></button>
+  <button class="nav-btn" id="n3" onclick="go('accts')"><i class="icon">dataset</i><span class="txt">Cuentas</span></button>
+  <button class="nav-btn" id="n4" onclick="go('clients')"><i class="icon">group</i><span class="txt">Clientes</span></button>
+  <button class="nav-btn" id="n5" onclick="go('sets')"><i class="icon">settings</i><span class="txt">Ajustes</span></button>
+</nav>
+<div id="sheet"></div>
+
+<script>
+/* =========================================================
+   CONFIGURACIÓN DE FIREBASE
+   ========================================================= */
+var FIREBASE_CONFIG = {
+  apiKey: "AIzaSyDTzO8PRSn4v0t5CCoLD3sV9qWGb8ULImo",
+  authDomain: "pay-e73e8.firebaseapp.com",
+  projectId: "pay-e73e8",
+  storageBucket: "pay-e73e8.firebasestorage.app",
+  messagingSenderId: "331853869208",
+  appId: "1:331853869208:web:c88f136b13ee533bd3a0ed"
+};
+var ADMIN_UID = "x4XlJ47x3Kbck9eSM6TQKCmU3zj2";
+/* ========================================================= */
+
+var KEY = 'subs-v1', S = { accounts: [], settings: {}, lastBackup: null, portalMap: {}, clientTags: {}, clientEmails: {} }, view = 'home';
+var ACC_EXP = {}, ACC_TAB = {}, CLI_EXP = {}, CLI_FILTER = 'all', CLI_SEARCH = '', HOME_SEARCH = '';
+var FB_READY = false, auth = null, db = null, CUR_USER = null, USER_ROLE = null, ACTIVE_SESSION_UID = null;
+var LOGIN_MODAL = false, LOGIN_STEP = 1, LOGIN_EMAIL = '', LOGIN_ERR = '', LOGIN_LOADING = false, LOGIN_LOAD_TXT = '', LOGIN_VERIFIED = false;
+var PORTAL_DATA = null, PORTAL_TAB = 'home', CATALOG_DATA = [], CLIENT_REQS = [], CLIENT_NOTICES = [];
+var ADMIN_REQS = [], RECENT_ACTIVATIONS = [], unsubReqs = null, unsubNotices = null, unsubInvites = null;
+var noticesInitialized = false, invitesInitialized = false, LOGIN_LOGGED = false;
+
+/* =========================================================
+   TEMA DE INTERFAZ V7 (CLARO / NEGRO OLED / GRAFITO) Y ACENTO
+   ========================================================= */
+var ACCENTS = [
+  ['#2563eb','Azul v7'],
+  ['#7c3aed','Lavanda'],
+  ['#10b981','Esmeralda'],
+  ['#38bdf8','Cielo'],
+  ['#f43f5e','Coral'],
+  ['#f59e0b','Ámbar']
+];
+
+function hexToRgb(hex){
+  var h = String(hex || '#2563eb').replace('#','');
+  if (h.length === 3) h = h[0]+h[0]+h[1]+h[1]+h[2]+h[2];
+  var n = parseInt(h, 16);
+  if (isNaN(n)) return { r: 37, g: 99, b: 235 };
+  return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
+}
+
+function applyTheme(theme, accent){
+  var t = theme || (S.settings && S.settings.theme) || localStorage.getItem('passly-theme-v7') || 'light';
+  var a = accent || (S.settings && S.settings.accent) || localStorage.getItem('passly-accent-v7') || '#2563eb';
+  var r = document.documentElement.style;
+  var themes = {
+    light: {
+      bg:'#f4f6fb', sb:'#eef2ff', sf:'#ffffff', sc:'#f8fafc', sh:'#eef2f6', sx:'#e2e8f0',
+      ln:'#e2e8f0', ls:'#f1f5f9', tx:'#0f172a', mu:'#64748b', cs:'light',
+      ok:'#059669', okBg:'#dcfce7', bad:'#dc2626', badBg:'#fee2e2', warn:'#d97706', warnBg:'#fef3c7',
+      shSm:'0 2px 10px rgba(15, 23, 42, 0.04)', shMd:'0 10px 30px rgba(15, 23, 42, 0.08)'
+    },
+    oled: {
+      bg:'#000000', sb:'#070709', sf:'#0a0a0a', sc:'#121212', sh:'#1a1a1a', sx:'#242424',
+      ln:'#222222', ls:'#171717', tx:'#f8fafc', mu:'#8e8e93', cs:'dark',
+      ok:'#34d399', okBg:'rgba(52,211,153,0.16)', bad:'#f87171', badBg:'rgba(248,113,113,0.16)', warn:'#fbbf24', warnBg:'rgba(251,191,36,0.16)',
+      shSm:'none', shMd:'0 16px 40px rgba(0,0,0,0.75)'
+    },
+    slate: {
+      bg:'#0b1120', sb:'#0f172a', sf:'#111827', sc:'#1e293b', sh:'#263348', sx:'#334155',
+      ln:'#334155', ls:'#1e293b', tx:'#f8fafc', mu:'#94a3b8', cs:'dark',
+      ok:'#34d399', okBg:'rgba(52,211,153,0.16)', bad:'#f87171', badBg:'rgba(248,113,113,0.16)', warn:'#fbbf24', warnBg:'rgba(251,191,36,0.16)',
+      shSm:'0 2px 10px rgba(0,0,0,0.25)', shMd:'0 16px 40px rgba(0,0,0,0.55)'
+    }
+  };
+  var pal = themes[t] || themes.light;
+  r.setProperty('--bg', pal.bg);
+  r.setProperty('--sidebar-bg', pal.sb);
+  r.setProperty('--surface', pal.sf);
+  r.setProperty('--surface-c', pal.sc);
+  r.setProperty('--surface-high', pal.sh);
+  r.setProperty('--surface-highest', pal.sx);
+  r.setProperty('--line', pal.ln);
+  r.setProperty('--line-subtle', pal.ls);
+  r.setProperty('--tx', pal.tx);
+  r.setProperty('--mu', pal.mu);
+  r.setProperty('--ok', pal.ok);
+  r.setProperty('--ok-bg', pal.okBg);
+  r.setProperty('--bad', pal.bad);
+  r.setProperty('--bad-bg', pal.badBg);
+  r.setProperty('--warn', pal.warn);
+  r.setProperty('--warn-bg', pal.warnBg);
+  r.setProperty('--shadow-sm', pal.shSm);
+  r.setProperty('--shadow-md', pal.shMd);
+  r.setProperty('color-scheme', pal.cs);
+
+  var rgb = hexToRgb(a);
+  var lum = (0.299 * rgb.r + 0.587 * rgb.g + 0.114 * rgb.b);
+  r.setProperty('--primary', a);
+  r.setProperty('--primary-container', 'rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',' + (t === 'light' ? '0.11' : '0.18') + ')');
+  r.setProperty('--on-primary', lum > 165 ? '#000000' : '#ffffff');
+  r.setProperty('--hero-grad', 'linear-gradient(135deg, rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',0.13) 0%, rgba(124,58,237,0.10) 55%, ' + pal.sf + ' 100%)');
+
+  var meta = document.getElementById('metaTheme');
+  if (meta) meta.setAttribute('content', pal.bg);
+  try {
+    localStorage.setItem('passly-theme-v7', t);
+    localStorage.setItem('passly-accent-v7', a);
+  } catch(e){}
+}
+
+function setThemePref(theme, accent){
+  if (!S.settings) S.settings = {};
+  if (theme) S.settings.theme = theme;
+  if (accent) S.settings.accent = accent;
+  applyTheme(S.settings.theme, S.settings.accent);
+  save();
+  if (USER_ROLE === 'admin') render();
+  else if (USER_ROLE === 'client') renderClientPortal();
+  else renderLogin(false);
+}
+
+function cycleQuickTheme(){
+  var cur = (S.settings && S.settings.theme) || localStorage.getItem('passly-theme-v7') || 'light';
+  var next = cur === 'light' ? 'oled' : (cur === 'oled' ? 'slate' : 'light');
+  setThemePref(next, null);
+  toast('Tema: ' + (next === 'light' ? 'Claro v7' : (next === 'oled' ? 'Negro OLED' : 'Grafito')));
+}
+
+if (FIREBASE_CONFIG.apiKey && window.firebase) {
+  try {
+    firebase.initializeApp(FIREBASE_CONFIG);
+    auth = firebase.auth();
+    db = firebase.firestore();
+    try { db.settings({ experimentalForceLongPolling: true, merge: true }); } catch (se) {}
+    FB_READY = true;
+  } catch (e) { console.error(e); }
+}
+
+function sanitizeState(obj){
+  if (!obj || typeof obj !== 'object') obj = {};
+  if (!Array.isArray(obj.accounts)) obj.accounts = [];
+  obj.accounts.forEach(function(c){ if (c && !Array.isArray(c.users)) c.users = []; });
+  if (!obj.settings || typeof obj.settings !== 'object') obj.settings = {};
+  if (!obj.portalMap || typeof obj.portalMap !== 'object') obj.portalMap = {};
+  if (!obj.clientTags || typeof obj.clientTags !== 'object') obj.clientTags = {};
+  if (!obj.clientEmails || typeof obj.clientEmails !== 'object') obj.clientEmails = {};
+  return obj;
+}
+
+if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(function(){});
+try {
+  var raw = localStorage.getItem(KEY);
+  if (raw) S = sanitizeState(JSON.parse(raw));
+} catch(e) { S = sanitizeState({}); }
+applyTheme();
+
+function withTimeout(promise, ms){
+  return Promise.race([
+    promise,
+    new Promise(function(_, reject){ setTimeout(function(){ reject(new Error('timeout')); }, ms || 5000); })
+  ]);
+}
+
+var syncTimer = null;
+function save() {
+  try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e) {}
+  if (FB_READY && USER_ROLE === 'admin' && db) {
+    if (syncTimer) clearTimeout(syncTimer);
+    syncTimer = setTimeout(function(){
+      db.collection('admin').doc('datos').set(S).catch(function(e){ console.error('Sync error:', e); });
+      syncCatalog();
+    }, 600);
+  }
+}
+
+function syncCatalog(){
+  if (!FB_READY || USER_ROLE !== 'admin' || !db) return;
+  var items = [];
+  S.accounts.forEach(function(c){
+    var free = (c.slots || 4) - (c.users ? c.users.length : 0);
+    if (free > 0 && c.hideCatalog !== true) {
+      var price = +c.catalogPrice || 0;
+      if (!price && c.users && c.users.length) price = +c.users[0].amount || 0;
+      if (!price && c.cost) price = Math.ceil((+c.cost || 0) / (c.slots || 4));
+      items.push({ id: c.id, name: c.name, logo: c.logo || '', price: price, free: free, mode: c.mode || 'cred' });
+    }
+  });
+  db.collection('catalog').doc('public').set({
+    items: items,
+    mpLink: (S.settings && S.settings.mpLink) || '',
+    adminWa: (S.settings && S.settings.adminWa) || '',
+    updatedAt: Date.now()
+  }).catch(function(e){ console.error('Catalog sync error:', e); });
+}
+
+var $ = function(s){ return document.querySelector(s); };
+function uid(){ return Math.random().toString(36).slice(2,9); }
+
+/* FUNCIÓN esc() CORREGIDA PARA ESCAPAR &, <, >, " Y ' */
+function esc(s){
+  return String(s||'').replace(/[&<>"']/g, function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
+
+function money(n){ return '$' + (+n||0).toLocaleString('es-MX', { maximumFractionDigits: 2 }); }
+function today(){ var d = new Date(); d.setHours(0,0,0,0); return d; }
+function mk(d){ var m = d.getMonth() + 1; return d.getFullYear() + '-' + (m < 10 ? '0' : '') + m; }
+function fmt(d){ return d.toLocaleDateString('es-MX', { day: 'numeric', month: 'short' }); }
+function fmtDT(ts){ if (!ts) return ''; return new Date(ts).toLocaleString('es-MX', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }); }
+function monthLabel(mStr){ if (!mStr) return ''; var p = mStr.split('-').map(Number); return new Date(p[0], p[1] - 1, 1).toLocaleDateString('es-MX', { month: 'short' }); }
+function monthLabelFull(mStr){ if (!mStr) return ''; var p = mStr.split('-').map(Number); return new Date(p[0], p[1] - 1, 1).toLocaleDateString('es-MX', { month: 'long', year: 'numeric' }); }
+function dueDate(y, m, day){ var last = new Date(y, m + 1, 0).getDate(); return new Date(y, m, Math.min(day, last)); }
+function getMonthList(startM, endM){
+  var res = []; if (!startM) return res;
+  var s = startM.split('-').map(Number), e = endM.split('-').map(Number), y = s[0], m = s[1];
+  while (y < e[0] || (y === e[0] && m <= e[1])) { res.push(y + '-' + (m < 10 ? '0' : '') + m); m++; if (m > 12) { m = 1; y++; } }
+  return res;
+}
+function greetingTime(){
+  var hr = new Date().getHours();
+  if (hr < 12) return 'Buenos días';
+  if (hr < 19) return 'Buenas tardes';
+  return 'Buenas noches';
+}
+function initials(name){
+  var parts = String(name || 'N').trim().split(/\s+/);
+  return ((parts[0] ? parts[0][0] : '') + (parts[1] ? parts[1][0] : '')).toUpperCase() || 'N';
+}
+function vib(ms){ if (navigator.vibrate) navigator.vibrate(ms || 35); }
+function toggleInp(id, btn){ var el = document.getElementById(id); if (!el) return; var show = el.type === 'password'; el.type = show ? 'text' : 'password'; btn.innerHTML = '<i class="icon" style="font-size:20px">' + (show ? 'visibility_off' : 'visibility') + '</i>'; }
+
+function fireLocalNotif(title, body){
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+  var opts = { body: body || '', icon: 'icon-192.png', vibrate: [200, 100, 200] };
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.ready.then(function(reg){ reg.showNotification(title, opts); }).catch(function(){});
+  }
+}
+
+/* DETECTOR DE DISPOSITIVO Y REGISTRO DE LOGIN */
+function detectDevice(){
+  var ua = navigator.userAgent || '';
+  var os = /Android/i.test(ua) ? 'Android' : (/iPhone|iPad|iPod/i.test(ua) ? 'iOS' : (/Windows/i.test(ua) ? 'Windows' : (/Mac/i.test(ua) ? 'Mac' : 'Otro')));
+  var br = /Edg/i.test(ua) ? 'Edge' : (/Chrome/i.test(ua) ? 'Chrome' : (/Safari/i.test(ua) ? 'Safari' : (/Firefox/i.test(ua) ? 'Firefox' : 'Navegador')));
+  var isPwa = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone;
+  return os + ' • ' + br + (isPwa ? ' (PWA)' : '');
+}
+function recordLogin(user, role, displayName){
+  if (!db || !user || LOGIN_LOGGED) return;
+  LOGIN_LOGGED = true;
+  db.collection('logins').add({
+    uid: user.uid,
+    email: user.email || '',
+    name: displayName || (role === 'admin' ? 'Administrador' : (user.email || 'Cliente')),
+    role: role,
+    device: detectDevice(),
+    at: Date.now()
+  }).catch(function(e){ console.error('Login log error:', e); });
+}
+
+/* =========================================================
+   LANDING PAGE + MODAL DESENFOCADO DE INICIO DE SESIÓN
+   ========================================================= */
+function openAuthModal(step){
+  LOGIN_MODAL = true;
+  LOGIN_STEP = step || 1;
+  LOGIN_ERR = '';
+  LOGIN_LOADING = false;
+  renderLogin(true);
+}
+
+function closeAuthModal(){
+  if (LOGIN_LOADING) return;
+  LOGIN_MODAL = false;
+  LOGIN_ERR = '';
+  renderLogin(false);
+}
+
+function renderLogin(focusInp){
+  var nav = $('#mainNav');
+  if (nav) nav.style.display = 'none';
+  document.body.className = 'landing-mode';
+  document.body.style.paddingBottom = '32px';
+
+  var dis = LOGIN_LOADING ? ' disabled' : '';
+  var progressHtml = LOGIN_LOADING ? '<div class="g-progress"></div>' : '';
+  var errHtml = LOGIN_ERR ? '<div class="g-err"><i class="icon" style="font-size:18px;flex:none">error</i><span>' + esc(LOGIN_ERR) + '</span></div>' : '';
+  var modalInner = '';
+
+  if (LOGIN_STEP === 1) {
+    modalInner = '<h2 class="g-title">Iniciar sesión</h2><p class="g-sub">Ingresa tu correo registrado en Passly</p>' +
+      '<div class="g-field"><input id="lgEmail" type="email" autocomplete="username" placeholder="Correo electrónico" value="' + esc(LOGIN_EMAIL) + '"' + dis + ' onkeydown="if(event.key===\'Enter\')loginNext()"></div>' +
+      errHtml +
+      '<div class="g-actions">' +
+        '<button class="g-link" type="button"' + dis + ' onclick="LOGIN_STEP=3;LOGIN_ERR=\'\';renderLogin(true)">Tengo un código</button>' +
+        '<button class="g-btn" id="btnNextEmail" type="button"' + dis + ' onclick="loginNext()">' + (LOGIN_LOADING ? '<span class="spinner"></span> ' + esc(LOGIN_LOAD_TXT || 'Verificando...') : 'Siguiente <i class="icon" style="font-size:18px">arrow_forward</i>') + '</button>' +
+      '</div>';
+  } else if (LOGIN_STEP === 2) {
+    var verBadge = LOGIN_VERIFIED ? '<i class="icon" style="font-size:16px;color:var(--ok)" title="Correo verificado">verified</i>' : '<i class="icon" style="font-size:18px;color:var(--primary)">account_circle</i>';
+    var hintHtml = !LOGIN_VERIFIED ? '<div class="g-hint"><i class="icon" style="font-size:16px;color:var(--primary);flex:none">info</i><span>Si aún no creas tu cuenta, toca <b>Tengo un código</b> para activarla.</span></div>' : '';
+    modalInner = '<h2 class="g-title">Te damos la bienvenida</h2>' +
+      '<div class="g-pill-wrap"><button class="g-pill" type="button"' + dis + ' onclick="LOGIN_STEP=1;LOGIN_ERR=\'\';renderLogin(true)">' + verBadge + '<span>' + esc(LOGIN_EMAIL) + '</span><i class="icon" style="font-size:16px">expand_more</i></button></div>' +
+      '<div class="g-field inp-eye"><input id="lgPass" type="password" autocomplete="current-password" placeholder="Ingresa tu contraseña"' + dis + ' onkeydown="if(event.key===\'Enter\')doLogin()"><button class="eye-btn" type="button" onclick="toggleInp(\'lgPass\', this)"><i class="icon" style="font-size:20px">visibility</i></button></div>' +
+      '<div style="display:flex;justify-content:space-between;align-items:center">' +
+        '<button class="g-link" style="padding:2px 0;font-size:12px" type="button"' + dis + ' onclick="doForgotPass()">¿Olvidaste tu contraseña?</button>' +
+        '<button class="g-link" style="padding:2px 0;font-size:12px" type="button"' + dis + ' onclick="LOGIN_STEP=3;LOGIN_ERR=\'\';renderLogin(true)">Tengo un código</button>' +
+      '</div>' +
+      hintHtml + errHtml +
+      '<div class="g-actions">' +
+        '<button class="g-link" type="button"' + dis + ' onclick="LOGIN_STEP=1;LOGIN_ERR=\'\';renderLogin(true)">Atrás</button>' +
+        '<button class="g-btn" id="btnDoLogin" type="button"' + dis + ' onclick="doLogin()">' + (LOGIN_LOADING ? '<span class="spinner"></span> ' + esc(LOGIN_LOAD_TXT || 'Entrando...') : 'Iniciar sesión') + '</button>' +
+      '</div>';
+  } else {
+    modalInner = '<h2 class="g-title">Activar cuenta</h2><p class="g-sub">Regístrate con el código de invitación que te envió tu administrador</p>' +
+      '<div class="g-field"><input id="actCode" style="text-transform:uppercase;letter-spacing:1.5px;font-weight:700" placeholder="Código (Ej. PASS-8F3K9X2M)"' + dis + '></div>' +
+      '<div class="g-field"><input id="actEmail" type="email" placeholder="Tu correo electrónico"' + dis + '></div>' +
+      '<div class="g-field inp-eye"><input id="actPass" type="password" placeholder="Crea una contraseña (mín. 6)"' + dis + ' onkeydown="if(event.key===\'Enter\')doActivate()"><button class="eye-btn" type="button" onclick="toggleInp(\'actPass\', this)"><i class="icon" style="font-size:20px">visibility</i></button></div>' +
+      errHtml +
+      '<div class="g-actions">' +
+        '<button class="g-link" type="button"' + dis + ' onclick="LOGIN_STEP=1;LOGIN_ERR=\'\';renderLogin(true)">Ya tengo cuenta</button>' +
+        '<button class="g-btn" id="btnDoAct" type="button"' + dis + ' onclick="doActivate()">' + (LOGIN_LOADING ? '<span class="spinner"></span> ' + esc(LOGIN_LOAD_TXT || 'Activando...') : 'Crear y activar') + '</button>' +
+      '</div>';
+  }
+
+  var featuresHtml = '<div class="feat-grid">' +
+    '<div class="feat-card"><div class="feat-ico"><i class="icon">subscriptions</i></div><b>Suscripciones centralizadas</b><p>Controla perfiles, lugares libres, mensualidades y fechas de corte de todas tus plataformas en un solo panel.</p></div>' +
+    '<div class="feat-card"><div class="feat-ico"><i class="icon">person_pin</i></div><b>Portal para cada cliente</b><p>Tus suscriptores entran con su cuenta para ver sus accesos, PINs, saldos pendientes y pedir nuevos servicios.</p></div>' +
+    '<div class="feat-card"><div class="feat-ico"><i class="icon">payments</i></div><b>Cobros y reportes de pago</b><p>Recibe referencias de Mercado Pago o transferencia SPEI, verifica pagos en un toque y envía recibos por WhatsApp.</p></div>' +
+    '<div class="feat-card"><div class="feat-ico"><i class="icon">enhanced_encryption</i></div><b>Bóveda cifrada AES-256</b><p>Tus contraseñas maestras se cifran con tu clave personal antes de respaldarse en la nube.</p></div>' +
+  '</div>';
+
+  var modalHtml = !LOGIN_MODAL ? '' :
+    '<div class="auth-overlay" onclick="if(event.target===this)closeAuthModal()">' +
+      '<div class="g-card">' +
+        progressHtml +
+        '<button class="g-close" type="button" onclick="closeAuthModal()" aria-label="Cerrar"><i class="icon" style="font-size:18px">close</i></button>' +
+        '<div class="g-logo"><img src="logo.png" alt="Passly" onerror="this.style.display=\'none\'"></div>' +
+        modalInner +
+      '</div>' +
+    '</div>';
+
+  $('#app').innerHTML =
+    '<div class="lp-shell' + (LOGIN_MODAL ? ' blurred' : '') + '">' +
+      '<div class="lp-nav">' +
+        '<div class="lp-brand"><img src="logo.png" alt="Passly" onerror="this.style.display=\'none\'"><b style="font-size:20px;color:var(--tx);letter-spacing:-.4px">Passly</b></div>' +
+        '<div style="display:flex;gap:8px;align-items:center">' +
+          '<button class="icon-circle" type="button" title="Cambiar tema" onclick="cycleQuickTheme()"><i class="icon" style="font-size:18px">contrast</i></button>' +
+          '<button class="mini" type="button" onclick="openAuthModal(1)">Iniciar sesión</button>' +
+          '<button class="mini primary" type="button" onclick="openAuthModal(3)">Registrarme</button>' +
+        '</div>' +
+      '</div>' +
+
+      '<section class="lp-hero">' +
+        '<div class="lp-badge"><i class="icon" style="font-size:15px">verified_user</i> Plataforma de gestión y portal de clientes</div>' +
+        '<h1 class="lp-title">Tus suscripciones, cobros y accesos bajo control.</h1>' +
+        '<p class="lp-desc">Passly organiza tus cuentas compartidas, calcula cortes y adeudos automáticamente y les da a tus clientes un portal privado para consultar sus servicios y reportar pagos.</p>' +
+        '<div class="lp-cta">' +
+          '<button class="btn" type="button" onclick="openAuthModal(1)"><i class="icon">login</i> Iniciar sesión</button>' +
+          '<button class="btn g" type="button" onclick="openAuthModal(3)"><i class="icon">vpn_key</i> Activar con código</button>' +
+        '</div>' +
+      '</section>' +
+
+      '<h2 style="text-align:center;margin:26px 0 6px">Todo incluido en Passly</h2>' +
+      '<p style="text-align:center;margin-bottom:16px">Diseñado para administrar grupos digitales sin hojas de cálculo</p>' +
+      featuresHtml +
+    '</div>' +
+    modalHtml;
+
+  if (LOGIN_MODAL && focusInp && !LOGIN_LOADING) {
+    setTimeout(function(){
+      var f = $(LOGIN_STEP === 1 ? '#lgEmail' : (LOGIN_STEP === 2 ? '#lgPass' : '#actCode'));
+      if (f) f.focus();
+    }, 60);
+  }
+}
+
+function isValidEmailFormat(email){
+  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
+}
+
+async function loginNext(){
+  if (LOGIN_LOADING) return;
+  var inp = $('#lgEmail');
+  var e = (inp ? inp.value : LOGIN_EMAIL).trim().toLowerCase();
+  if (!isValidEmailFormat(e)) {
+    LOGIN_EMAIL = e;
+    LOGIN_ERR = 'Escribe un correo electrónico válido (ej. usuario@dominio.com).';
+    renderLogin(false);
+    var el = $('#lgEmail'); if (el) { el.classList.add('shake'); el.focus(); }
+    return;
+  }
+  LOGIN_EMAIL = e;
+  LOGIN_ERR = '';
+  LOGIN_LOADING = true;
+  LOGIN_LOAD_TXT = 'Verificando correo...';
+  renderLogin(false);
+
+  try {
+    if (FB_READY && auth) {
+      var methods = await withTimeout(auth.fetchSignInMethodsForEmail(e), 4000);
+      LOGIN_VERIFIED = !!(methods && methods.length > 0);
+      LOGIN_STEP = 2;
+    } else {
+      LOGIN_VERIFIED = false;
+      LOGIN_STEP = 2;
+    }
+  } catch (err) {
+    if (err && err.code === 'auth/invalid-email') {
+      LOGIN_ERR = 'El formato del correo electrónico no es válido.';
+      LOGIN_STEP = 1;
+    } else if (err && err.code === 'auth/user-not-found') {
+      LOGIN_ERR = 'No encontramos una cuenta con este correo. Si tienes código, toca "Tengo un código".';
+      LOGIN_STEP = 1;
+    } else if (err && err.code === 'auth/too-many-requests') {
+      LOGIN_ERR = 'Demasiados intentos seguidos. Espera un momento e intenta de nuevo.';
+      LOGIN_STEP = 1;
+    } else {
+      LOGIN_VERIFIED = false;
+      LOGIN_STEP = 2;
+    }
+  } finally {
+    LOGIN_LOADING = false;
+    LOGIN_LOAD_TXT = '';
+    renderLogin(true);
+  }
+}
+
+async function doLogin(){
+  if (LOGIN_LOADING) return;
+  var p = ($('#lgPass') ? $('#lgPass').value : '');
+  if (!p) {
+    LOGIN_ERR = 'Ingresa tu contraseña.';
+    renderLogin(false);
+    var el = $('#lgPass'); if (el) { el.classList.add('shake'); el.focus(); }
+    return;
+  }
+  LOGIN_ERR = '';
+  LOGIN_LOADING = true;
+  LOGIN_LOAD_TXT = 'Iniciando sesión...';
+  renderLogin(false);
+
+  try {
+    var cred = await auth.signInWithEmailAndPassword(LOGIN_EMAIL, p);
+    LOGIN_ERR = '';
+    if (cred && cred.user) {
+      await handleUserSession(cred.user);
+    }
+  } catch (e) {
+    LOGIN_LOADING = false;
+    LOGIN_LOAD_TXT = '';
+    if (e && (e.code === 'auth/user-not-found' || e.code === 'auth/invalid-credential')) {
+      LOGIN_ERR = 'Correo o contraseña incorrectos. Verifica tus datos o activa tu código.';
+    } else if (e && e.code === 'auth/wrong-password') {
+      LOGIN_ERR = 'Contraseña incorrecta. Intenta de nuevo o restablécela.';
+    } else if (e && e.code === 'auth/too-many-requests') {
+      LOGIN_ERR = 'Cuenta bloqueada temporalmente por varios intentos. Intenta más tarde.';
+    } else {
+      LOGIN_ERR = 'Error al entrar: ' + ((e && e.message) || 'revisa tu conexión');
+    }
+    renderLogin(true);
+  }
+}
+
+async function doForgotPass(){
+  if (!LOGIN_EMAIL || LOGIN_LOADING) return;
+  LOGIN_LOADING = true;
+  LOGIN_LOAD_TXT = 'Enviando enlace...';
+  renderLogin(false);
+  try {
+    await auth.sendPasswordResetEmail(LOGIN_EMAIL);
+    toast('Te enviamos un correo para restablecer tu contraseña');
+  } catch (e) {
+    toast('No se pudo enviar el correo de recuperación');
+  } finally {
+    LOGIN_LOADING = false;
+    LOGIN_LOAD_TXT = '';
+    renderLogin(false);
+  }
+}
+
+async function doActivate(){
+  if (LOGIN_LOADING) return;
+  var code = ($('#actCode').value || '').trim().toUpperCase();
+  var email = ($('#actEmail').value || '').trim().toLowerCase();
+  var pass = ($('#actPass').value || '');
+  if (!code || !isValidEmailFormat(email) || pass.length < 6) {
+    LOGIN_ERR = 'Completa el código, un correo válido y contraseña de mínimo 6 caracteres.';
+    renderLogin(false);
+    return;
+  }
+  LOGIN_ERR = '';
+  LOGIN_LOADING = true;
+  LOGIN_LOAD_TXT = 'Activando cuenta...';
+  renderLogin(false);
+
+  try {
+    var invDoc = await withTimeout(db.collection('invites').doc(code).get(), 6000);
+    if (!invDoc.exists) {
+      LOGIN_LOADING = false; LOGIN_ERR = 'Código de activación no encontrado.'; renderLogin(false); return;
+    }
+    var inv = invDoc.data();
+    if (inv.used) {
+      LOGIN_LOADING = false; LOGIN_ERR = 'Este código ya fue utilizado.'; renderLogin(false); return;
+    }
+    var cred = await auth.createUserWithEmailAndPassword(email, pass);
+    var newUid = cred.user.uid;
+    await db.collection('portal').doc(newUid).set(Object.assign({}, inv.portalData, { email: email, updatedAt: Date.now() }));
+    await db.collection('invites').doc(code).update({ used: true, usedBy: newUid, usedEmail: email, usedAt: Date.now() });
+    LOGIN_ERR = '';
+    toast('¡Cuenta activada con éxito!');
+    await handleUserSession(cred.user);
+  } catch (e) {
+    LOGIN_LOADING = false;
+    LOGIN_LOAD_TXT = '';
+    LOGIN_ERR = (e.code === 'auth/email-already-in-use') ? 'Ese correo ya está registrado. Inicia sesión.' : ('Error al activar: ' + (e.message || 'revisa tus datos'));
+    renderLogin(false);
+  }
+}
+
+function doLogout(){
+  if (unsubReqs) { unsubReqs(); unsubReqs = null; }
+  if (unsubNotices) { unsubNotices(); unsubNotices = null; }
+  if (unsubInvites) { unsubInvites(); unsubInvites = null; }
+  ACTIVE_SESSION_UID = null;
+  LOGIN_LOGGED = false;
+  LOGIN_LOADING = false;
+  LOGIN_VERIFIED = false;
+  LOGIN_MODAL = false;
+  if (FB_READY && auth) auth.signOut();
+  CUR_USER = null; USER_ROLE = null; PORTAL_DATA = null; LOGIN_STEP = 1; LOGIN_ERR = '';
+  renderLogin(false);
+}
+
+/* =========================================================
+   PORTAL DEL CLIENTE V7 (CONCEPTO VISUAL INTEGRADO)
+   ========================================================= */
+function startClientNoticeListener(){
+  if (unsubNotices) unsubNotices();
+  noticesInitialized = false;
+  unsubNotices = db.collection('notices').where('uid', '==', CUR_USER.uid).where('read', '==', false).onSnapshot(function(snap){
+    var list = snap.docs.map(function(doc){ return Object.assign({ id: doc.id }, doc.data()); }).sort(function(a,b){ return (b.createdAt||0) - (a.createdAt||0); });
+    if (noticesInitialized && list.length > CLIENT_NOTICES.length) {
+      var newest = list[0];
+      fireLocalNotif('Passly: ' + (newest.title || 'Nuevo aviso'), newest.body || '');
+    }
+    CLIENT_NOTICES = list;
+    noticesInitialized = true;
+    if (USER_ROLE === 'client') renderClientPortal();
+  }, function(e){ console.error(e); });
+}
+
+async function dismissNotice(id){
+  try { await db.collection('notices').doc(id).update({ read: true, readAt: Date.now() }); toast('Aviso marcado como leído'); } catch(e){}
+}
+
+function renderClientPortal(){
+  document.body.className = 'client-mode';
+  $('#mainNav').style.display = 'none';
+  document.body.style.paddingBottom = '40px';
+  var d = PORTAL_DATA;
+
+  var clientName = d ? d.name : (CUR_USER.email || 'Cliente');
+  var topBarHtml =
+    '<header class="topbar">' +
+      '<div style="display:flex;align-items:center;gap:10px">' +
+        '<img src="logo.png" alt="Passly" style="height:34px;border-radius:9px" onerror="this.style.display=\'none\'">' +
+        '<b style="font-size:19px;font-weight:800;letter-spacing:-.4px">Passly</b>' +
+      '</div>' +
+      '<div class="tb-right">' +
+        '<button class="icon-circle" type="button" title="Cambiar tema" onclick="cycleQuickTheme()"><i class="icon" style="font-size:18px">contrast</i></button>' +
+        '<button class="icon-circle" type="button" title="Avisos" onclick="PORTAL_TAB=\'home\';renderClientPortal()">' +
+          '<i class="icon" style="font-size:19px">notifications</i>' +
+          (CLIENT_NOTICES.length ? '<span class="dot"></span>' : '') +
+        '</button>' +
+        '<button class="user-pill" type="button" onclick="doLogout()" title="Cerrar sesión">' +
+          '<span class="avatar-circle">' + esc(initials(clientName)) + '</span>' +
+          '<span class="user-pill-txt"><b>' + esc(clientName.split(' ')[0]) + '</b><small>Salir</small></span>' +
+        '</button>' +
+      '</div>' +
+    '</header>';
+
+  if (!d) {
+    $('#app').innerHTML = topBarHtml +
+      '<div class="content-area">' +
+        '<div class="card" style="text-align:center;padding:36px 20px">' +
+          '<i class="icon" style="font-size:44px;color:var(--primary);margin-bottom:10px">hourglass_empty</i>' +
+          '<h2 style="margin:0 0 8px">Tu portal se está preparando</h2>' +
+          '<p>Tu administrador aún no ha publicado tus servicios en este perfil.</p>' +
+          '<button class="btn g" style="margin-top:20px" onclick="doLogout()"><i class="icon">logout</i> Cerrar sesión</button>' +
+        '</div>' +
+      '</div>';
+    return;
+  }
+
+  var activeRows = d.rows.filter(function(r){ return !r.paused; });
+  var nextDueRow = activeRows.find(function(r){ return r.nextCycleText && r.nextCycleText !== 'Pausado'; }) || activeRows[0];
+  var pendingPayReq = CLIENT_REQS.find(function(r){ return r.type === 'payment' && r.status === 'pending'; });
+  var tagChip = d.tag === 'prueba' ? '<span class="chip info">Cuenta de prueba</span>' : (d.tag === 'vip' ? '<span class="chip ok">VIP</span>' : '');
+
+  var noticesHtml = CLIENT_NOTICES.map(function(n){
+    return '<div class="notice-card">' +
+      '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px">' +
+        '<div><b style="color:var(--primary);font-size:14px"><i class="icon" style="font-size:16px">notifications_active</i> ' + esc(n.title) + '</b><p style="color:var(--tx);margin-top:4px;font-size:13px">' + esc(n.body) + '</p></div>' +
+        '<button class="mini primary" onclick="dismissNotice(\'' + n.id + '\')">Entendido</button>' +
+      '</div></div>';
+  }).join('');
+
+  var alertBanner = '';
+  if (pendingPayReq) {
+    alertBanner = '<div class="banner-info"><i class="icon">schedule</i><div><b>Pago en revisión (' + money(pendingPayReq.amount) + ')</b><br><span style="font-weight:400">Ref: ' + esc(pendingPayReq.reference || 'Sin ref') + ' • En cuanto el administrador lo verifique, tu saldo se actualizará.</span></div></div>';
+  } else if (d.pastDebt > 0) {
+    var owedSvcs = d.rows.filter(function(r){ return !r.isUpToDate; }).map(function(r){ return r.svc + ' (' + money(r.totalPay) + ')'; }).join(', ');
+    alertBanner = '<div class="banner-alert"><i class="icon">warning</i><div><b>Tienes pagos atrasados: ' + money(d.totalPay) + '</b><br><span style="font-weight:400">Pendiente: ' + esc(owedSvcs) + '. Evita la suspensión de tus accesos.</span></div></div>';
+  } else if (d.totalPay > 0) {
+    var curSvcs = d.rows.filter(function(r){ return !r.isUpToDate; }).map(function(r){ return r.svc + ' (' + money(r.totalPay) + ')'; }).join(', ');
+    alertBanner = '<div class="banner-warn"><i class="icon">notifications_active</i><div><b>Tienes pago pendiente este ciclo: ' + money(d.totalPay) + '</b><br><span style="font-weight:400">Servicios: ' + esc(curSvcs) + '</span></div></div>';
+  }
+
+  var tabsHtml =
+    '<div class="client-nav-pills">' +
+      '<button class="c-pill ' + (PORTAL_TAB === 'home' ? 'on' : '') + '" onclick="PORTAL_TAB=\'home\';renderClientPortal()"><i class="icon" style="font-size:17px">home</i> Inicio</button>' +
+      '<button class="c-pill ' + (PORTAL_TAB === 'payments' ? 'on' : '') + '" onclick="PORTAL_TAB=\'payments\';renderClientPortal()"><i class="icon" style="font-size:17px">payments</i> Pagos</button>' +
+      '<button class="c-pill ' + (PORTAL_TAB === 'catalog' ? 'on' : '') + '" onclick="PORTAL_TAB=\'catalog\';renderClientPortal()"><i class="icon" style="font-size:17px">add_shopping_cart</i> Pedir servicio</button>' +
+      '<button class="c-pill ' + (PORTAL_TAB === 'profile' ? 'on' : '') + '" onclick="PORTAL_TAB=\'profile\';renderClientPortal()"><i class="icon" style="font-size:17px">person</i> Mi perfil</button>' +
+    '</div>';
+
+  var bodyHtml = '';
+
+  if (PORTAL_TAB === 'home') {
+    bodyHtml +=
+      '<section class="client-hero">' +
+        '<div class="client-kicker">Portal del cliente</div>' +
+        '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">' +
+          '<h1 style="font-size:28px;margin:0">Hola, ' + esc(d.name) + ' 👋</h1>' + tagChip +
+        '</div>' +
+        '<p style="margin-top:6px;max-width:480px">Aquí puedes administrar tus servicios, consultar tus accesos, pagos y solicitudes de forma rápida y segura.</p>' +
+      '</section>' +
+      noticesHtml + alertBanner +
+      '<div class="kpi-grid-3">' +
+        '<div class="kpi-card">' +
+          '<div class="kpi-top"><div class="kpi-ico blue"><i class="icon">layers</i></div><span class="kpi-label">Servicios activos</span></div>' +
+          '<div class="kpi-val">' + activeRows.length + '</div>' +
+          '<div class="kpi-sub"><span class="status-dot ' + (d.totalPay === 0 ? 'ok' : 'warn') + '">' + (d.totalPay === 0 ? 'Todo al día' : 'Con saldo pendiente') + '</span></div>' +
+        '</div>' +
+        '<div class="kpi-card">' +
+          '<div class="kpi-top"><div class="kpi-ico purple"><i class="icon">calendar_today</i></div><span class="kpi-label">Total a pagar</span></div>' +
+          '<div class="kpi-val">' + (d.totalPay > 0 ? money(d.totalPay) : '$0') + ' <small style="font-size:13px;font-weight:700;color:var(--mu)">MXN</small></div>' +
+          '<div class="kpi-sub">Anterior: ' + money(d.pastDebt) + ' • Ciclo: ' + money(d.curDue) + '</div>' +
+        '</div>' +
+        '<div class="kpi-card">' +
+          '<div class="kpi-top"><div class="kpi-ico green"><i class="icon">autorenew</i></div><span class="kpi-label">Próximo corte</span></div>' +
+          '<div class="kpi-val" style="font-size:21px">' + esc(nextDueRow ? nextDueRow.nextCycleText : 'Sin fecha') + '</div>' +
+          '<div class="kpi-sub">' + esc(nextDueRow ? nextDueRow.svc : 'Al corriente') + '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">' +
+        '<h2 style="margin:0">Mis suscripciones</h2>' +
+        '<button class="g-link" style="font-size:13px" onclick="PORTAL_TAB=\'catalog\';renderClientPortal()">Pedir otro →</button>' +
+      '</div>' +
+      '<div class="subs-grid">' +
+        d.rows.map(function(r, idx){
+          var dotCls = r.paused ? 'warn' : (r.badgeCls === 'bad' ? 'bad' : (r.badgeCls === 'warn' ? 'warn' : 'ok'));
+          var dotTxt = r.paused ? 'Pausado' : (r.isUpToDate ? 'Activo' : r.shortStatus);
+          var credHtml = '';
+          if (r.mode !== 'fam' && (r.login || r.pw)) {
+            credHtml = '<div class="vault" style="margin:6px 0 0">' +
+              (r.login ? '<div class="vr"><span>👤 <code>' + esc(r.login) + '</code></span><button class="mini" onclick="copyTxt(decodeURIComponent(\'' + encodeURIComponent(r.login) + '\'))">Copiar</button></div>' : '') +
+              (r.pw ? '<div class="vr"><span>🔑 <code id="cpw-' + idx + '">••••••••</code></span><span><button class="mini" onclick="toggleClientPw(' + idx + ',\'' + encodeURIComponent(r.pw) + '\')">Ver</button> <button class="mini" onclick="copyTxt(decodeURIComponent(\'' + encodeURIComponent(r.pw) + '\'))">Copiar</button></span></div>' : '') +
+            '</div>';
+          }
+          return '<div class="sub-card">' +
+            '<div>' +
+              '<div class="sub-card-top">' +
+                badge({ logo: r.logo, name: r.svc }) +
+                '<b style="font-size:15px;color:var(--tx)">' + money(r.amt) + '/mes</b>' +
+              '</div>' +
+              '<div class="sub-card-title">' + esc(r.svc) + '</div>' +
+              '<div class="sub-card-meta">' + (r.pfl ? 'Perfil: ' + esc(r.pfl) + (r.pin ? ' • PIN ' + esc(r.pin) : '') : 'Acceso individual') + '</div>' +
+              '<div style="margin-top:10px"><span class="status-dot ' + dotCls + '">' + esc(dotTxt) + '</span></div>' +
+            '</div>' +
+            '<div>' +
+              credHtml +
+              '<div style="font-size:12px;color:var(--mu);margin-top:8px">' + esc(r.statusText) + '</div>' +
+            '</div>' +
+          '</div>';
+        }).join('') +
+      '</div>' +
+      '<div class="client-bottom-grid">' +
+        '<div class="card" style="margin:0">' +
+          '<h2 style="margin:0 0 10px"><i class="icon" style="color:var(--primary)">calendar_month</i> Próximos pagos</h2>' +
+          d.rows.map(function(r){
+            return '<div class="tr">' + badge({ logo: r.logo, name: r.svc }, 1) +
+              '<div class="grow"><b>' + esc(r.svc) + '</b><small><span>Corte: ' + esc(r.nextCycleText || '-') + '</span></small></div>' +
+              '<div class="ta"><b>' + money(r.amt) + '</b><span class="chip ' + r.badgeCls + '">' + esc(r.shortStatus) + '</span></div>' +
+            '</div>';
+          }).join('') +
+        '</div>' +
+        '<div class="help-card">' +
+          '<div>' +
+            '<div class="kpi-ico blue" style="margin-bottom:12px"><i class="icon">support_agent</i></div>' +
+            '<h2 style="margin:0 0 6px">¿Ya realizaste tu pago o necesitas ayuda?</h2>' +
+            '<p>Envía tu referencia para acreditar tu mensualidad o contáctanos directamente.</p>' +
+          '</div>' +
+          '<div style="display:flex;flex-direction:column;gap:8px">' +
+            '<button class="btn" style="width:100%" onclick="openReportPayment()"><i class="icon">check_circle</i> Reportar pago →</button>' +
+            (d.adminWa ? '<a class="btn g" style="width:100%" target="_blank" rel="noopener" href="' + waLink(d.adminWa, 'Hola, soy ' + d.name + ', te escribo desde mi portal de Passly.') + '"><i class="icon">chat</i> WhatsApp de soporte</a>' : '') +
+          '</div>' +
+        '</div>' +
+      '</div>';
+  } else if (PORTAL_TAB === 'payments') {
+    bodyHtml += '<div class="card"><h2 style="margin:0 0 12px">Opciones para pagar</h2>';
+    if (d.mpLink) bodyHtml += '<a class="btn mp" style="width:100%;margin-bottom:10px" target="_blank" rel="noopener" href="' + esc(d.mpLink) + '"><i class="icon">credit_card</i> Pagar con Mercado Pago</a>';
+    if (d.owner || d.bank || d.clabe) {
+      bodyHtml += '<div class="tkc" style="margin-bottom:14px">' +
+        (d.owner ? '<div class="tt"><span>Titular</span><b>' + esc(d.owner) + '</b></div>' : '') +
+        (d.bank ? '<div class="tt"><span>Banco</span><b>' + esc(d.bank) + '</b></div>' : '') +
+        (d.clabe ? '<div class="tt"><span>CLABE / Cuenta</span><span style="display:flex;align-items:center;gap:8px"><b>' + esc(d.clabe) + '</b><button class="mini" onclick="copyTxt(\'' + esc(d.clabe) + '\')">Copiar</button></span></div>' : '') +
+      '</div>';
+    }
+    bodyHtml += '<button class="btn ok" style="width:100%" onclick="openReportPayment()"><i class="icon">check_circle</i> Ya pagué (Enviar referencia)</button>';
+    if (d.adminWa) bodyHtml += '<a class="btn w" style="width:100%;margin-top:10px" target="_blank" rel="noopener" href="' + waLink(d.adminWa, 'Hola, soy ' + d.name + ', te escribo desde mi portal de Passly.') + '"><i class="icon">chat</i> Contactar por WhatsApp</a>';
+    bodyHtml += '</div>';
+
+    var payReqs = CLIENT_REQS.filter(function(r){ return r.type === 'payment'; });
+    if (payReqs.length) {
+      bodyHtml += '<h2>Historial de reportes</h2>' + payReqs.map(function(r){
+        var st = r.status === 'approved' ? '<span class="chip ok">Verificado</span>' : (r.status === 'rejected' ? '<span class="chip bad">Rechazado</span>' : '<span class="chip warn">En revisión</span>');
+        return '<div class="row"><div class="grow"><b>Pago reportado: ' + money(r.amount) + '</b><small><span>' + esc(r.method || 'Transferencia') + '</span><span>Ref: ' + esc(r.reference || '-') + '</span></small></div>' + st + '</div>';
+      }).join('');
+    }
+  } else if (PORTAL_TAB === 'catalog') {
+    bodyHtml += '<p style="margin-bottom:14px">Servicios con lugares disponibles. Solicita el que quieras y en cuanto el administrador verifique tu pago se activará aquí.</p>';
+    if (!CATALOG_DATA.length) {
+      bodyHtml += '<div class="empty"><p>Por ahora no hay lugares disponibles en el catálogo.</p></div>';
+    } else {
+      bodyHtml += '<div class="subs-grid">' + CATALOG_DATA.map(function(it){
+        return '<div class="sub-card"><div class="sub-card-top">' + badge({ logo: it.logo, name: it.name }) +
+          '<button class="mini primary" onclick="openRequestService(\'' + esc(it.id) + '\',\'' + esc(it.name) + '\',' + (+it.price || 0) + ')">Solicitar</button></div>' +
+          '<div><div class="sub-card-title">' + esc(it.name) + '</div><div class="sub-card-meta">' + money(it.price) + '/mes • <span style="color:var(--ok);font-weight:700">' + it.free + ' ' + (it.free === 1 ? 'lugar libre' : 'lugares libres') + '</span></div></div>' +
+        '</div>';
+      }).join('') + '</div>';
+    }
+    var svcReqs = CLIENT_REQS.filter(function(r){ return r.type === 'service'; });
+    if (svcReqs.length) {
+      bodyHtml += '<h2>Mis solicitudes</h2>' + svcReqs.map(function(r){
+        var st = r.status === 'approved' ? '<span class="chip ok">Aprobado</span>' : (r.status === 'rejected' ? '<span class="chip bad">No disponible</span>' : '<span class="chip warn">Pendiente</span>');
+        return '<div class="row"><div class="grow"><b>' + esc(r.serviceName) + ' (' + money(r.price) + '/mes)</b><small><span>' + esc(r.note || 'Sin comentarios') + '</span></small></div>' + st + '</div>';
+      }).join('');
+    }
+  } else if (PORTAL_TAB === 'profile') {
+    var notifSt = ('Notification' in window) ? Notification.permission : 'unsupported';
+    bodyHtml += '<div class="card"><h2 style="margin:0 0 10px">Notificaciones</h2>' +
+      (notifSt === 'granted' ? '<p style="color:var(--ok)">✓ Notificaciones activadas en este dispositivo.</p>' :
+      '<p style="margin-bottom:12px">Activa las alertas para enterarte al instante de cambios de contraseña o avisos.</p><button class="btn g" style="width:100%" onclick="askNotifPerm()"><i class="icon">notifications</i> Activar notificaciones</button>') +
+    '</div>' +
+    '<div class="card"><h2 style="margin:0 0 10px">Mis datos</h2>' +
+      '<label>Correo de acceso</label><input disabled value="' + esc(CUR_USER.email || '') + '">' +
+      '<label>Mi WhatsApp (10 dígitos)</label><input id="cpPhone" type="tel" inputmode="numeric" value="' + esc(d.phone || '') + '">' +
+      '<button class="btn" style="width:100%;margin-top:14px" onclick="saveClientPhone()"><i class="icon">save</i> Actualizar WhatsApp</button>' +
+    '</div>' +
+    '<div class="card"><h2 style="margin:0 0 10px">Cambiar contraseña</h2>' +
+      '<label>Nueva contraseña (mínimo 6 caracteres)</label><div class="inp-eye"><input id="cpNewPw" type="password"><button class="eye-btn" type="button" onclick="toggleInp(\'cpNewPw\', this)"><i class="icon" style="font-size:20px">visibility</i></button></div>' +
+      '<button class="btn g" style="width:100%;margin-top:14px" onclick="changeClientPass()"><i class="icon">key</i> Actualizar contraseña</button>' +
+    '</div>';
+  }
+
+  $('#app').innerHTML = topBarHtml + '<div class="content-area">' + tabsHtml + bodyHtml + '</div>';
+}
+
+function askNotifPerm(){
+  if (!('Notification' in window)) { toast('Tu navegador no soporta notificaciones'); return; }
+  Notification.requestPermission().then(function(p){
+    toast(p === 'granted' ? 'Notificaciones activadas' : 'Permiso denegado');
+    if (USER_ROLE === 'client') renderClientPortal(); else render();
+  });
+}
+async function saveClientPhone(){
+  var ph = ($('#cpPhone').value || '').replace(/\D/g, '');
+  try {
+    await db.collection('portal').doc(CUR_USER.uid).update({ phone: ph, phoneUpdatedAt: Date.now() });
+    PORTAL_DATA.phone = ph; toast('WhatsApp actualizado');
+  } catch (e) { toast('Error al actualizar'); }
+}
+async function changeClientPass(){
+  var np = ($('#cpNewPw').value || ''); if (np.length < 6) { toast('Mínimo 6 caracteres'); return; }
+  try { await CUR_USER.updatePassword(np); $('#cpNewPw').value = ''; toast('Contraseña actualizada'); }
+  catch (e) { toast('Por seguridad, cierra sesión y vuelve a entrar para cambiar tu contraseña.'); }
+}
+function toggleClientPw(idx, encPw){ var el = $('#cpw-' + idx); if (!el) return; if (el.dataset.v) { el.textContent = '••••••••'; delete el.dataset.v; } else { el.textContent = decodeURIComponent(encPw); el.dataset.v = '1'; } }
+
+function openReportPayment(){
+  var d = PORTAL_DATA;
+  openS('<h2>Reportar pago</h2><p>Avisa al administrador que ya realizaste tu pago para que lo verifique.</p>' +
+    '<label>Monto pagado</label><input id="rpAmt" type="number" inputmode="decimal" value="' + (d.totalPay || d.tot || '') + '">' +
+    '<label>Método de pago</label><select id="rpMethod"><option value="Mercado Pago">Mercado Pago</option><option value="Transferencia SPEI">Transferencia SPEI</option><option value="Efectivo">Efectivo</option></select>' +
+    '<label>Clave de rastreo / Referencia / Nombre</label><input id="rpRef" placeholder="Ej. Últimos 4 dígitos o folio MP">' +
+    '<div class="acts"><button class="btn g" onclick="closeS()">Cancelar</button><button class="btn ok" onclick="submitPaymentReport()">Enviar aviso</button></div>');
+}
+async function submitPaymentReport(){
+  var amt = parseFloat($('#rpAmt').value) || 0, method = $('#rpMethod').value, ref = ($('#rpRef').value || '').trim();
+  if (!amt) { toast('Escribe el monto pagado'); return; }
+  try {
+    await db.collection('requests').add({ type: 'payment', status: 'pending', uid: CUR_USER.uid, clientName: PORTAL_DATA.name, amount: amt, method: method, reference: ref, createdAt: Date.now() });
+    closeS(); toast('Aviso enviado. Tu pago está en revisión.');
+    await loadClientReqs(); renderClientPortal();
+  } catch (e) { toast('Error al enviar reporte'); }
+}
+
+function openRequestService(cid, name, price){
+  openS('<h2>Solicitar ' + esc(name) + '</h2><p>Mensualidad estimada: <b>' + money(price) + '</b>. El administrador revisará tu solicitud y te contactará para activar el acceso.</p>' +
+    '<label>Nombre de perfil deseado o nota (opcional)</label><input id="rsNote" placeholder="Ej. Perfil Juan, PIN 1234">' +
+    '<div class="acts"><button class="btn g" onclick="closeS()">Cancelar</button><button class="btn" onclick="submitServiceReq(\'' + esc(cid) + '\',\'' + esc(name) + '\',' + price + ')">Enviar solicitud</button></div>');
+}
+async function submitServiceReq(cid, name, price){
+  var note = ($('#rsNote').value || '').trim();
+  try {
+    await db.collection('requests').add({ type: 'service', status: 'pending', uid: CUR_USER.uid, clientName: PORTAL_DATA.name, accountId: cid, serviceName: name, price: price, note: note, createdAt: Date.now() });
+    closeS(); toast('Solicitud enviada al administrador');
+    await loadClientReqs(); renderClientPortal();
+  } catch (e) { toast('Error al enviar solicitud'); }
+}
+
+async function loadClientReqs(){
+  if (!CUR_USER || !db) return;
+  try {
+    var snap = await withTimeout(db.collection('requests').where('uid', '==', CUR_USER.uid).get(), 4500);
+    CLIENT_REQS = snap.docs.map(function(doc){ return Object.assign({ id: doc.id }, doc.data()); }).sort(function(a,b){ return (b.createdAt||0) - (a.createdAt||0); });
+  } catch (e) { CLIENT_REQS = []; }
+}
+
+/* =========================================================
+   ADMIN: LISTENER DE CÓDIGOS ACTIVADOS EN VIVO + LOGINS
+   ========================================================= */
+function startAdminInviteListener(){
+  if (unsubInvites) unsubInvites();
+  invitesInitialized = false;
+  unsubInvites = db.collection('invites').where('used', '==', true).onSnapshot(function(snap){
+    var changed = false;
+    snap.docChanges().forEach(function(chg){
+      var inv = chg.doc.data();
+      if (inv.clientKey && inv.usedBy && S.portalMap[inv.clientKey] !== inv.usedBy) {
+        S.portalMap[inv.clientKey] = inv.usedBy;
+        if (inv.usedEmail) S.clientEmails[inv.clientKey] = inv.usedEmail;
+        changed = true;
+        if (invitesInitialized) {
+          RECENT_ACTIVATIONS.unshift({ id: chg.doc.id, name: inv.clientName || inv.clientKey, email: inv.usedEmail || '', at: inv.usedAt || Date.now() });
+          fireLocalNotif('Passly: Código activado', (inv.clientName || 'Un cliente') + ' ya activó su portal.');
+          toast((inv.clientName || 'Cliente') + ' activó su código');
+        }
+      }
+    });
+    invitesInitialized = true;
+    if (changed) { save(); render(); }
+  }, function(e){ console.error(e); });
+}
+
+function dismissActivation(id){
+  RECENT_ACTIVATIONS = RECENT_ACTIVATIONS.filter(function(x){ return x.id !== id; });
+  render();
+}
+
+async function openLoginHistory(){
+  openS('<h2><i class="icon" style="color:var(--primary)">devices</i> Dispositivos con login</h2><p>Cargando historial...</p>');
+  try {
+    var snap = await withTimeout(db.collection('logins').orderBy('at', 'desc').limit(40).get(), 5000);
+    var logs = snap.docs.map(function(doc){ return Object.assign({ id: doc.id }, doc.data()); });
+    window._LOGS = logs;
+    renderLoginHistory('all');
+  } catch (e) {
+    openS('<h2>Dispositivos con login</h2><p style="color:var(--bad)">Error al cargar. Verifica las reglas de Firestore (/logins).</p><div class="acts"><button class="btn g" onclick="closeS()">Cerrar</button></div>');
+  }
+}
+
+function renderLoginHistory(filter){
+  var logs = (window._LOGS || []).filter(function(l){
+    if (filter === 'admin') return l.role === 'admin';
+    if (filter === 'client') return l.role !== 'admin';
+    return true;
+  });
+  var rows = !logs.length ? '<div class="empty"><p>Sin registros en esta categoría.</p></div>' : logs.map(function(l){
+    var isAdm = l.role === 'admin';
+    return '<div class="row">' +
+      '<i class="icon" style="color:' + (isAdm ? 'var(--primary)' : 'var(--ok)') + ';font-size:24px">' + (isAdm ? 'admin_panel_settings' : 'smartphone') + '</i>' +
+      '<div class="grow"><b>' + esc(l.name || l.email) + '</b><small><span>' + esc(l.device || 'Dispositivo') + '</span><span>' + fmtDT(l.at) + '</span></small></div>' +
+      '<span class="chip ' + (isAdm ? 'info' : 'ok') + '">' + (isAdm ? 'Admin' : 'Cliente') + '</span>' +
+    '</div>';
+  }).join('');
+
+  openS('<h2><i class="icon" style="color:var(--primary)">devices</i> Dispositivos con login</h2>' +
+    '<div class="subtabs">' +
+      '<button class="subtab ' + (filter === 'all' ? 'on' : '') + '" onclick="renderLoginHistory(\'all\')">Todos</button>' +
+      '<button class="subtab ' + (filter === 'admin' ? 'on' : '') + '" onclick="renderLoginHistory(\'admin\')">Míos (Admin)</button>' +
+      '<button class="subtab ' + (filter === 'client' ? 'on' : '') + '" onclick="renderLoginHistory(\'client\')">Clientes</button>' +
+    '</div>' + rows +
+    '<div class="acts"><button class="btn g" onclick="closeS()">Cerrar</button></div>');
+}
+
+async function sendNoticeToUid(targetUid, title, body, clientEmail){
+  if (!targetUid || !db) return;
+  await db.collection('notices').add({ uid: targetUid, title: title, body: body, read: false, createdAt: Date.now() });
+  var s = S.settings || {};
+  if (s.ejsService && s.ejsTemplate && s.ejsKey && clientEmail) {
+    fetch('https://api.emailjs.com/api/v1.0/email/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ service_id: s.ejsService, template_id: s.ejsTemplate, user_id: s.ejsKey, template_params: { to_email: clientEmail, title: title, message: body } })
+    }).catch(function(){});
+  }
+}
+
+function openSendNotice(mode, id){
+  var label = mode === 'acc' ? ('Todos en ' + esc(findAcc(id).name)) : esc(CL[id].name);
+  openS('<h2>Enviar aviso — ' + label + '</h2>' +
+    '<label>Plantilla rápida</label><select id="ntTpl" onchange="fillNoticeTpl(\'' + mode + '\',\'' + id + '\')">' +
+      '<option value="custom">Mensaje personalizado</option>' +
+      '<option value="logout">Aviso de cierre de sesiones</option>' +
+      '<option value="pw">Aviso de cambio de contraseña</option>' +
+      '<option value="pay">Recordatorio de pago pendiente</option>' +
+    '</select>' +
+    '<label>Título del aviso</label><input id="ntTitle" placeholder="Ej. Aviso importante">' +
+    '<label>Mensaje</label><textarea id="ntBody" placeholder="Escribe el mensaje que verá el cliente en su portal..."></textarea>' +
+    '<div class="acts"><button class="btn g" onclick="closeS()">Cancelar</button><button class="btn" onclick="execSendNotice(\'' + mode + '\',\'' + id + '\')"><i class="icon">send</i> Enviar aviso</button></div>');
+}
+function fillNoticeTpl(mode, id){
+  var tpl = $('#ntTpl').value, svc = mode === 'acc' ? findAcc(id).name : 'tus servicios';
+  if (tpl === 'logout') { $('#ntTitle').value = 'Cierre de sesiones — ' + svc; $('#ntBody').value = 'Por seguridad y mantenimiento se cerrarán las sesiones activas en ' + svc + '. Por favor vuelve a iniciar sesión con los datos disponibles en tu portal.'; }
+  else if (tpl === 'pw') { $('#ntTitle').value = 'Nueva contraseña — ' + svc; $('#ntBody').value = 'Se actualizó la contraseña de acceso para ' + svc + '. Ya puedes consultarla y copiarla en tu pestaña de Servicios.'; }
+  else if (tpl === 'pay') { $('#ntTitle').value = 'Recordatorio de pago'; $('#ntBody').value = 'Te recordamos que tienes un pago pendiente o próximo a vencer. Puedes consultar el monto y reportar tu pago desde la pestaña Pagos.'; }
+}
+async function execSendNotice(mode, id){
+  var title = ($('#ntTitle').value || '').trim(), body = ($('#ntBody').value || '').trim();
+  if (!title || !body) { toast('Completa título y mensaje'); return; }
+  var count = 0;
+  if (mode === 'acc') {
+    var c = findAcc(id);
+    for (var i = 0; i < c.users.length; i++) {
+      var k = c.users[i].name.trim().toLowerCase(), uUid = S.portalMap[k];
+      if (uUid) { await sendNoticeToUid(uUid, title, body, S.clientEmails[k]); count++; }
+    }
+  } else {
+    var g = CL[id], k = g.name.toLowerCase(), uUid = S.portalMap[k];
+    if (uUid) { await sendNoticeToUid(uUid, title, body, S.clientEmails[k]); count = 1; }
+  }
+  closeS();
+  toast(count ? ('Aviso enviado a ' + count + ' portal(es)') : 'Ningún cliente tiene portal activo aún');
+}
+
+/* =========================================================
+   ADMIN: SOLICITUDES Y PAGOS POR VERIFICAR
+   ========================================================= */
+function startAdminReqListener(){
+  if (unsubReqs) unsubReqs();
+  unsubReqs = db.collection('requests').where('status', '==', 'pending').onSnapshot(function(snap){
+    ADMIN_REQS = snap.docs.map(function(doc){ return Object.assign({ id: doc.id }, doc.data()); }).sort(function(a,b){ return (b.createdAt||0) - (a.createdAt||0); });
+    var dot = $('#reqDot'); if (dot) dot.style.display = ADMIN_REQS.length ? 'block' : 'none';
+    if (USER_ROLE === 'admin') render();
+  }, function(e){ console.error(e); });
+}
+
+function renderReqCards(){
+  var actHtml = RECENT_ACTIVATIONS.map(function(a){
+    return '<div class="banner-ok"><div><b><i class="icon" style="font-size:16px">verified</i> ' + esc(a.name) + ' activó su portal</b><br><span style="font-weight:400">' + esc(a.email) + ' • ' + fmtDT(a.at) + '</span></div><button class="mini ok" onclick="dismissActivation(\'' + a.id + '\')">OK</button></div>';
+  }).join('');
+
+  var listHtml = ADMIN_REQS.map(function(r){
+    if (r.type === 'payment') {
+      return '<div class="card" style="border-left:4px solid var(--warn)">' +
+        '<div class="card-header">' +
+          '<div class="kpi-ico amber"><i class="icon">payments</i></div>' +
+          '<div class="grow"><b>' + esc(r.clientName) + ' reportó pago: ' + money(r.amount) + '</b><small><span>' + esc(r.method || 'Transferencia') + '</span><span>Ref: ' + esc(r.reference || 'Sin ref') + '</span><span>' + fmtDT(r.createdAt) + '</span></small></div>' +
+          '<span class="chip warn">Pago pendiente</span>' +
+        '</div>' +
+        '<div class="acts" style="margin-top:14px">' +
+          '<button class="btn d" onclick="resolveReq(\'' + r.id + '\',\'rejected\')"><i class="icon">close</i> Rechazar</button>' +
+          '<button class="btn ok" onclick="approvePaymentReq(\'' + r.id + '\')"><i class="icon">check</i> Verificar y aplicar</button>' +
+        '</div>' +
+      '</div>';
+    } else {
+      return '<div class="card" style="border-left:4px solid var(--primary)">' +
+        '<div class="card-header">' +
+          '<div class="kpi-ico blue"><i class="icon">add_shopping_cart</i></div>' +
+          '<div class="grow"><b>' + esc(r.clientName) + ' solicita ' + esc(r.serviceName) + '</b><small><span>' + money(r.price) + '/mes</span><span>' + esc(r.note || 'Sin nota') + '</span><span>' + fmtDT(r.createdAt) + '</span></small></div>' +
+          '<span class="chip info">Nuevo servicio</span>' +
+        '</div>' +
+        '<div class="acts" style="margin-top:14px">' +
+          '<button class="btn d" onclick="resolveReq(\'' + r.id + '\',\'rejected\')"><i class="icon">close</i> Rechazar</button>' +
+          '<button class="btn" onclick="approveServiceReq(\'' + r.id + '\')"><i class="icon">check</i> Aprobar y asignar</button>' +
+        '</div>' +
+      '</div>';
+    }
+  }).join('');
+
+  return actHtml + listHtml;
+}
+
+function reqsView(){
+  var header = '<div class="page-head"><div><h1>Solicitudes</h1><p>Pagos reportados y peticiones de servicios de tus clientes</p></div>' +
+    (ADMIN_REQS.length ? '<span class="chip info">' + ADMIN_REQS.length + ' pendiente(s)</span>' : '<span class="chip ok">Al día</span>') + '</div>';
+  if (!ADMIN_REQS.length && !RECENT_ACTIVATIONS.length) {
+    return header + '<div class="empty"><i class="icon" style="font-size:40px;color:var(--primary);margin-bottom:8px">inbox</i><p>No tienes solicitudes ni pagos pendientes por revisar.</p></div>';
+  }
+  return header + renderReqCards();
+}
+
+async function approvePaymentReq(reqId){
+  var r = ADMIN_REQS.find(function(x){ return x.id === reqId; }); if (!r) return;
+  var curM = mk(today()), key = (r.clientName || '').trim().toLowerCase();
+  S.accounts.forEach(function(c){
+    c.users.forEach(function(u){
+      if (u.name.trim().toLowerCase() === key && !u.paused) {
+        var deb = getDebt(u);
+        if (!Array.isArray(u.paidMonths)) u.paidMonths = [];
+        deb.unpaid.forEach(function(m){ if (u.paidMonths.indexOf(m) === -1) u.paidMonths.push(m); });
+        if (u.paidMonths.indexOf(curM) === -1) u.paidMonths.push(curM);
+      }
+    });
+  });
+  save();
+  await db.collection('requests').doc(reqId).update({ status: 'approved', resolvedAt: Date.now() });
+  await refreshClientPortalSafe(key, r.uid);
+  await sendNoticeToUid(r.uid, 'Pago verificado', 'Tu pago de ' + money(r.amount) + ' fue verificado con éxito. ¡Gracias!', S.clientEmails[key]);
+  toast('Pago verificado y portal actualizado');
+  render();
+}
+async function approveServiceReq(reqId){
+  var r = ADMIN_REQS.find(function(x){ return x.id === reqId; }); if (!r) return;
+  await db.collection('requests').doc(reqId).update({ status: 'approved', resolvedAt: Date.now() });
+  toast('Solicitud aprobada. Agrega su perfil y republica su portal.');
+  if (r.accountId && findAcc(r.accountId)) editUser(r.accountId, '');
+}
+async function resolveReq(reqId, st){ await db.collection('requests').doc(reqId).update({ status: st, resolvedAt: Date.now() }); toast('Solicitud rechazada'); }
+
+async function refreshClientPortalSafe(clientKey, clientUid, updatedAccId, newPlainPw){
+  if (!clientUid || !db) return;
+  buildClientList();
+  var g = CL.find(function(x){ return x.name.toLowerCase() === clientKey; });
+  if (!g) return;
+  var d = cliData(g);
+  try {
+    var prev = await db.collection('portal').doc(clientUid).get();
+    if (prev.exists && prev.data().rows) {
+      var prevRows = prev.data().rows;
+      d.rows.forEach(function(row){
+        if (updatedAccId && row.cid === updatedAccId && newPlainPw) { row.pw = newPlainPw; }
+        else { var match = prevRows.find(function(pr){ return pr.cid === row.cid && pr.pw; }); if (match) row.pw = match.pw; }
+      });
+    }
+    await db.collection('portal').doc(clientUid).set(Object.assign({}, d, { updatedAt: Date.now() }));
+  } catch (e) { console.error(e); }
+}
+
+/* =========================================================
+   LÓGICA ADMIN (FACTURACIÓN, CUENTAS, CLIENTES, BÓVEDA)
+   ========================================================= */
+function getDebt(u){
+  var t = today(), curM = mk(t), start = u.startMonth || curM;
+  var paid = Array.isArray(u.paidMonths) ? u.paidMonths : (u.paidFor ? [u.paidFor] : []);
+  if (u.paused) return { paused: true, unpaid: [], count: 0, debt: 0, isCurPaid: paid.indexOf(curM) !== -1, nextD: null, paidMonths: paid };
+  var list = getMonthList(start, curM), unpaid = [];
+  list.forEach(function(m){ if (paid.indexOf(m) === -1) { if (m < curM) unpaid.push(m); else if (m === curM && t.getDate() > (u.day || 1)) unpaid.push(m); } });
+  var isCurPaid = paid.indexOf(curM) !== -1;
+  var targetM = isCurPaid ? (function(){ var p = curM.split('-').map(Number), y = p[0], m = p[1] + 1; if (m > 12) { m = 1; y++; } return y + '-' + (m < 10 ? '0' : '') + m; })() : curM;
+  var pTarget = targetM.split('-').map(Number);
+  return { paused: false, unpaid: unpaid, count: unpaid.length, debt: unpaid.length * (+u.amount || 0), isCurPaid: isCurPaid, nextD: dueDate(pTarget[0], pTarget[1] - 1, u.day || 1), paidMonths: paid };
+}
+
+function getBillingInfo(u){
+  var deb = getDebt(u), t = today(), curM = mk(t), amt = +u.amount || 0;
+  if (u.paused) return { deb: deb, pastMonths: [], pastDebt: 0, curDue: 0, totalPay: 0, statusText: 'Servicio pausado', shortStatus: 'Pausado', badgeCls: 'warn', nextCycleText: 'Pausado', isUpToDate: true };
+  var pastMonths = deb.unpaid.filter(function(m){ return m < curM; }), pastDebt = pastMonths.length * amt, curDue = deb.isCurPaid ? 0 : amt, totalPay = pastDebt + curDue;
+  var nextDateStr = deb.nextD ? fmt(deb.nextD) : '', diff = deb.nextD ? Math.round((deb.nextD - t) / 864e5) : 0;
+  var statusText = '', shortStatus = '', badgeCls = 'ok';
+  if (deb.isCurPaid && pastMonths.length === 0) { statusText = 'Al corriente — Siguiente ciclo: ' + nextDateStr; shortStatus = 'Próx. ' + nextDateStr; badgeCls = 'ok'; }
+  else if (pastMonths.length > 0 && curDue > 0) { statusText = 'Adeudo anterior (' + pastMonths.map(monthLabel).join(', ') + ') + Ciclo actual'; shortStatus = 'Debe ' + (pastMonths.length + 1) + ' m'; badgeCls = 'bad'; }
+  else if (pastMonths.length > 0) { statusText = 'Adeudo anterior (' + pastMonths.map(monthLabel).join(', ') + ')'; shortStatus = 'Debe ' + pastMonths.length + ' m'; badgeCls = 'bad'; }
+  else {
+    if (diff < 0) { statusText = 'Ciclo actual vencido (corte ' + nextDateStr + ')'; shortStatus = 'Vencido'; badgeCls = 'bad'; }
+    else if (diff === 0) { statusText = 'Fecha de pago hoy (' + nextDateStr + ')'; shortStatus = 'Cobra hoy'; badgeCls = 'warn'; }
+    else { statusText = 'Siguiente ciclo: ' + nextDateStr + ' (en ' + diff + ' días)'; shortStatus = 'Corte ' + nextDateStr; badgeCls = diff <= 3 ? 'warn' : ''; }
+  }
+  return { deb: deb, pastMonths: pastMonths, pastDebt: pastDebt, curDue: curDue, totalPay: totalPay, statusText: statusText, shortStatus: shortStatus, badgeCls: badgeCls, nextCycleText: nextDateStr, isUpToDate: (totalPay === 0) };
+}
+
+function userChip(deb, u){
+  if (u.paused) return '<span class="chip warn">Pausado</span>';
+  if (deb.count > 0) return '<span class="chip bad">Debe ' + deb.count + 'm</span>';
+  if (deb.isCurPaid) return '<span class="chip ok">Al corriente</span>';
+  var diff = Math.round((deb.nextD - today()) / 864e5);
+  return diff === 0 ? '<span class="chip warn">Cobra hoy</span>' : '<span class="chip ' + (diff <= 3 ? 'warn' : '') + '">En ' + diff + ' d</span>';
+}
+
+function allUsers(){ var a = []; (S.accounts || []).forEach(function(c){ (c.users || []).forEach(function(u){ a.push({ c: c, u: u, deb: getDebt(u) }); }); }); return a; }
+
+function urow(x, acc){
+  var c = x.c, u = x.u, deb = x.deb, sub = [];
+  if (acc) sub.push('<span>' + esc(c.name) + '</span>');
+  sub.push('<span>' + money(u.amount) + '</span>');
+  if (u.pfl) sub.push('<span>' + esc(u.pfl) + (u.pin ? ' PIN ' + esc(u.pin) : '') + '</span>');
+  if (deb.count > 0) sub.push('<span style="color:var(--bad);font-weight:600">Adeudo: ' + deb.unpaid.map(monthLabel).join(', ') + '</span>');
+  else if (!u.paused && deb.nextD) sub.push('<span>' + (deb.isCurPaid ? 'Próximo ' : 'Corte ') + fmt(deb.nextD) + '</span>');
+  return '<div class="row ' + (u.paused ? 'paused' : '') + '">' + (acc ? badge(c, 1) : '') +
+    '<div class="grow" onclick="editUser(\'' + c.id + '\',\'' + u.id + '\')"><b>' + esc(u.name) + '</b><small>' + sub.join('') + '</small></div>' +
+    '<div class="row-actions">' + userChip(deb, u) +
+      '<button class="mini ' + (deb.count > 0 ? 'bad' : 'primary') + '" onclick="quickPay(\'' + c.id + '\',\'' + u.id + '\')">' + (deb.count > 0 ? 'Cobrar 1m' : (deb.isCurPaid ? 'Deshacer' : 'Ya pagó')) + '</button>' +
+      '<button class="mini d" onclick="quickDelUser(this,\'' + c.id + '\',\'' + u.id + '\')"><i class="icon" style="font-size:16px">delete</i></button>' +
+    '</div></div>';
+}
+
+function quickPay(cid, uid){
+  vib(40);
+  var c = findAcc(cid), u = c.users.filter(function(x){ return x.id === uid; })[0], deb = getDebt(u);
+  if (!Array.isArray(u.paidMonths)) u.paidMonths = u.paidFor ? [u.paidFor] : [];
+  if (deb.count > 0) { var mToPay = deb.unpaid[0]; u.paidMonths.push(mToPay); toast('Cobrado mes de ' + monthLabelFull(mToPay)); }
+  else if (deb.isCurPaid) { u.paidMonths.pop(); toast('Se deshizo el último pago'); }
+  else { var curM = mk(today()); if (u.paidMonths.indexOf(curM) === -1) u.paidMonths.push(curM); toast('Mes corriente marcado como pagado'); }
+  save(); render();
+}
+
+function quickDelUser(btn, cid, uid){
+  vib(50);
+  if (!btn.dataset.s) { btn.dataset.s = "1"; btn.innerHTML = '<i class="icon" style="font-size:16px">check</i>'; toast('Toca otra vez para eliminar'); setTimeout(function(){ btn.dataset.s = ''; btn.innerHTML = '<i class="icon" style="font-size:16px">delete</i>'; }, 3000); return; }
+  delUser(cid, uid);
+}
+
+function openQuickAddClient(){
+  if (!S.accounts.length) { toast('Primero crea una cuenta'); editAcc(''); return; }
+  var opts = S.accounts.map(function(c){
+    var free = (c.slots || 4) - c.users.length;
+    return '<option value="' + c.id + '">' + esc(c.name) + ' (' + c.users.length + '/' + (c.slots || 4) + (free > 0 ? ' — ' + free + ' libre' : ' — Llena') + ')</option>';
+  }).join('');
+  openS('<h2>Nuevo cliente / perfil</h2><p>Elige en qué cuenta quieres registrar al cliente:</p>' +
+    '<label>Cuenta de destino</label><select id="qaAcc">' + opts + '</select>' +
+    '<div class="acts"><button class="btn g" onclick="closeS()">Cancelar</button><button class="btn" onclick="showUserForm($(\'#qaAcc\').value, \'\')">Continuar</button></div>');
+}
+
+function home(){
+  buildClientList();
+  var us = allUsers(), totMonth = 0, gotMonth = 0, totalDebt = 0, upcomingCount = 0, t = today();
+  us.forEach(function(x){
+    var u = x.u, deb = x.deb;
+    if (!u.paused) {
+      totMonth += +u.amount || 0;
+      if (!deb.isCurPaid && deb.nextD) {
+        var diff = Math.round((deb.nextD - t) / 864e5);
+        if (diff >= 0 && diff <= 5) upcomingCount++;
+      }
+    }
+    if (deb.isCurPaid) gotMonth += +u.amount || 0;
+    totalDebt += deb.debt;
+  });
+
+  var reqAlertHtml = '';
+  if (ADMIN_REQS.length) {
+    reqAlertHtml = '<div class="banner-info" style="justify-content:space-between;align-items:center">' +
+      '<div><b>Tienes ' + ADMIN_REQS.length + ' solicitud(es) pendiente(s)</b><br><span style="font-weight:400">Revisa pagos reportados y peticiones de clientes.</span></div>' +
+      '<button class="mini primary" onclick="go(\'reqs\')">Revisar →</button>' +
+    '</div>';
+  }
+  var actHtml = RECENT_ACTIVATIONS.map(function(a){
+    return '<div class="banner-ok"><div><b><i class="icon" style="font-size:16px">verified</i> ' + esc(a.name) + ' activó su portal</b><br><span style="font-weight:400">' + esc(a.email) + ' • ' + fmtDT(a.at) + '</span></div><button class="mini ok" onclick="dismissActivation(\'' + a.id + '\')">OK</button></div>';
+  }).join('');
+
+  var h =
+    '<div class="page-head">' +
+      '<div><h1>' + greetingTime() + ', Nando 👋</h1><p>Aquí tienes el resumen de tus suscripciones en Passly.</p></div>' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
+        '<button class="btn" onclick="editAcc(\'\')"><i class="icon">add</i> Cuenta</button>' +
+        '<button class="btn g" onclick="openQuickAddClient()"><i class="icon">person_add</i> Cliente</button>' +
+        '<button class="btn g" onclick="openVault()"><i class="icon">lock_open</i> Bóveda</button>' +
+      '</div>' +
+    '</div>' +
+    actHtml + reqAlertHtml;
+
+  if (!S.accounts.length) {
+    return h + '<div class="empty"><p>Aún no tienes cuentas registradas.</p><button class="btn" onclick="editAcc(\'\')">Crear primera cuenta</button></div>';
+  }
+
+  h +=
+    '<div class="kpi-grid-4">' +
+      '<div class="kpi-card highlight">' +
+        '<div class="kpi-top"><div class="kpi-ico blue"><i class="icon">account_balance_wallet</i></div><span class="kpi-label">Cobrado del mes</span></div>' +
+        '<div class="kpi-val">' + money(gotMonth) + '</div>' +
+        '<div class="kpi-sub">Meta mes: ' + money(totMonth) + '</div>' +
+      '</div>' +
+      '<div class="kpi-card">' +
+        '<div class="kpi-top"><div class="kpi-ico blue"><i class="icon">group</i></div><span class="kpi-label">Clientes activos</span></div>' +
+        '<div class="kpi-val">' + CL.length + '</div>' +
+        '<div class="kpi-sub">En ' + S.accounts.length + (S.accounts.length === 1 ? ' cuenta' : ' cuentas') + '</div>' +
+      '</div>' +
+      '<div class="kpi-card">' +
+        '<div class="kpi-top"><div class="kpi-ico purple"><i class="icon">event_busy</i></div><span class="kpi-label">Adeudo vencido</span></div>' +
+        '<div class="kpi-val" style="color:' + (totalDebt > 0 ? 'var(--bad)' : 'var(--tx)') + '">' + money(totalDebt) + '</div>' +
+        '<div class="kpi-sub">' + (totalDebt > 0 ? 'Meses anteriores' : 'Sin atrasos') + '</div>' +
+      '</div>' +
+      '<div class="kpi-card">' +
+        '<div class="kpi-top"><div class="kpi-ico green"><i class="icon">autorenew</i></div><span class="kpi-label">Cortes próximos</span></div>' +
+        '<div class="kpi-val">' + upcomingCount + '</div>' +
+        '<div class="kpi-sub">En los próximos 5 días</div>' +
+      '</div>' +
+    '</div>' +
+    ownBlock(totMonth) +
+    '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:18px 0 12px">' +
+      '<h2 style="margin:0"><i class="icon" style="color:var(--primary)">calendar_today</i> Cobros y vencimientos</h2>' +
+      '<div class="search-box" style="margin:0;min-width:220px;flex:1;max-width:300px"><i class="icon">search</i><input placeholder="Filtrar cobros..." value="' + esc(HOME_SEARCH) + '" oninput="HOME_SEARCH=this.value;render()"></div>' +
+    '</div>';
+
+  if (!us.length) return h + '<div class="empty"><p>Agrega perfiles a tus cuentas para verlos aquí.</p></div>';
+  var q = (HOME_SEARCH || '').trim().toLowerCase();
+  var filteredUs = !q ? us : us.filter(function(x){
+    return x.u.name.toLowerCase().indexOf(q) !== -1 || x.c.name.toLowerCase().indexOf(q) !== -1;
+  });
+  filteredUs.sort(function(a,b){ if (b.deb.count !== a.deb.count) return b.deb.count - a.deb.count; return (a.deb.nextD || 0) - (b.deb.nextD || 0); });
+  if (!filteredUs.length) return h + '<div class="empty"><p>No hay cobros que coincidan con "' + esc(HOME_SEARCH) + '".</p></div>';
+  return h + filteredUs.map(function(x){ return urow(x, true); }).join('');
+}
+
+function accts(){
+  var h = '<div class="page-head"><div><h1>Cuentas</h1><p>Administra tus plataformas, lugares disponibles y accesos</p></div>' +
+    '<div style="display:flex;gap:8px"><button class="btn" onclick="editAcc(\'\')"><i class="icon">add</i> Nueva cuenta</button><button class="btn g" onclick="openVault()"><i class="icon">lock_open</i> Bóveda</button></div></div>';
+  if (!S.accounts.length) return h + '<div class="empty"><p>No tienes cuentas todavía.</p></div>';
+  return h + S.accounts.map(function(c){
+    var t = 0; c.users.forEach(function(u){ if (!u.paused) t += +u.amount || 0; });
+    var exp = !!ACC_EXP[c.id], tab = ACC_TAB[c.id] || 'users', inner = '';
+    if (exp) {
+      inner = '<div class="subtabs"><button class="subtab ' + (tab === 'users' ? 'on' : '') + '" onclick="setAccTab(\'' + c.id + '\',\'users\')"><i class="icon" style="font-size:16px">group</i> Perfiles (' + c.users.length + ')</button><button class="subtab ' + (tab === 'pay' ? 'on' : '') + '" onclick="setAccTab(\'' + c.id + '\',\'pay\')"><i class="icon" style="font-size:16px">credit_card</i> Facturación</button><button class="subtab ' + (tab === 'cred' ? 'on' : '') + '" onclick="setAccTab(\'' + c.id + '\',\'cred\')"><i class="icon" style="font-size:16px">key</i> Accesos</button></div>';
+      if (tab === 'users') {
+        inner += c.users.map(function(u){ return urow({ c: c, u: u, deb: getDebt(u) }, false); }).join('') + (c.users.length < (c.slots || 4) ? '<button class="add" onclick="editUser(\'' + c.id + '\',\'\')"><i class="icon">person_add</i> Agregar perfil / usuario</button>' : '');
+      } else if (tab === 'pay') {
+        inner += '<div class="strip" style="grid-template-columns:1fr 1fr;margin-bottom:10px"><div><b>' + money(c.cost) + '</b><small>Mi costo al mes</small></div><div><b style="color:var(--ok)">' + money(t - (+c.cost || 0)) + '</b><small>Ganancia neta</small></div></div>' + orow(c, false);
+      } else if (tab === 'cred') {
+        inner += (c.mode === 'fam' ? '<div style="padding:12px;text-align:center;color:var(--mu);font-size:13px">Esta cuenta es <b>Grupo familiar</b>.</div>' : cinfo(c)) +
+          '<div class="grid-2" style="margin-top:8px"><button class="btn g" onclick="pwdNotice(\'' + c.id + '\')"><i class="icon">content_copy</i> Texto clave</button><button class="btn" onclick="openSendNotice(\'acc\',\'' + c.id + '\')"><i class="icon">campaign</i> Enviar aviso</button></div>';
+      }
+    }
+    return '<div class="card"><div class="card-header">' + badge(c) + '<div class="grow" onclick="toggleAcc(\'' + c.id + '\')"><b>' + esc(c.name) + '</b><small><span>' + c.users.length + '/' + (c.slots || 4) + ' perfiles</span><span>' + money(t) + ' al mes</span></small></div><button class="mini" onclick="editAcc(\'' + c.id + '\')">Editar</button><button class="mini d" onclick="quickDelAcc(this,\'' + c.id + '\')">Eliminar</button><button class="mini" style="width:34px;height:34px;padding:0" onclick="toggleAcc(\'' + c.id + '\')"><i class="icon">' + (exp ? 'expand_less' : 'expand_more') + '</i></button></div>' + inner + '</div>';
+  }).join('');
+}
+
+function toggleAcc(cid){ ACC_EXP[cid] = !ACC_EXP[cid]; if (!ACC_TAB[cid]) ACC_TAB[cid] = 'users'; render(); }
+function setAccTab(cid, tab){ ACC_EXP[cid] = true; ACC_TAB[cid] = tab; render(); }
+function quickDelAcc(btn, cid){ vib(50); if (!btn.dataset.s) { btn.dataset.s = "1"; btn.textContent = '¿Eliminar?'; setTimeout(function(){ btn.dataset.s = ''; btn.textContent = 'Eliminar'; }, 3500); return; } S.accounts = S.accounts.filter(function(c){ return c.id !== cid; }); save(); render(); toast('Cuenta eliminada'); }
+
+function render(){
+  try {
+    document.body.className = 'admin-mode';
+    document.body.style.paddingBottom = '';
+    var nav = $('#mainNav'); if (nav) nav.style.display = 'flex';
+    var views = { home: home, reqs: reqsView, accts: accts, clients: clients, sets: sets };
+    var viewHtml = (views[view] || home)();
+    var reqCount = ADMIN_REQS.length;
+
+    var sidebarHtml =
+      '<aside class="sidebar">' +
+        '<div>' +
+          '<div class="sb-brand"><img src="logo.png" alt="Passly" onerror="this.style.display=\'none\'"><b>Passly</b></div>' +
+          '<div class="sb-nav">' +
+            '<button class="sb-item ' + (view === 'home' ? 'on' : '') + '" onclick="go(\'home\')"><span class="sb-item-left"><i class="icon">home</i> Inicio</span></button>' +
+            '<button class="sb-item ' + (view === 'reqs' ? 'on' : '') + '" onclick="go(\'reqs\')"><span class="sb-item-left"><i class="icon">notifications_active</i> Solicitudes</span>' + (reqCount ? '<span class="sb-pill-cnt">' + reqCount + '</span>' : '') + '</button>' +
+            '<button class="sb-item ' + (view === 'accts' ? 'on' : '') + '" onclick="go(\'accts\')"><span class="sb-item-left"><i class="icon">dataset</i> Cuentas</span></button>' +
+            '<button class="sb-item ' + (view === 'clients' ? 'on' : '') + '" onclick="go(\'clients\')"><span class="sb-item-left"><i class="icon">group</i> Clientes</span></button>' +
+            '<button class="sb-item ' + (view === 'sets' ? 'on' : '') + '" onclick="go(\'sets\')"><span class="sb-item-left"><i class="icon">settings</i> Ajustes</span></button>' +
+          '</div>' +
+        '</div>' +
+        '<div class="sb-foot">' +
+          '<button class="sb-item" onclick="openVault()"><span class="sb-item-left"><i class="icon">lock_open</i> Bóveda de claves</span></button>' +
+          '<button class="sb-item" style="color:var(--bad)" onclick="doLogout()"><span class="sb-item-left"><i class="icon">logout</i> Cerrar sesión</span></button>' +
+        '</div>' +
+      '</aside>';
+
+    var topbarHtml =
+      '<header class="topbar">' +
+        '<div class="tb-brand-mob"><img src="logo.png" alt="Passly" onerror="this.style.display=\'none\'"><b>Passly</b></div>' +
+        '<div class="tb-search"><i class="icon">search</i><input placeholder="Buscar clientes o servicios..." value="' + esc(CLI_SEARCH) + '" oninput="CLI_SEARCH=this.value;if(view!==\'clients\'){view=\'clients\';render();}else{renderClientsListOnly();}"></div>' +
+        '<div class="tb-right">' +
+          '<button class="icon-circle" type="button" title="Cambiar tema" onclick="cycleQuickTheme()"><i class="icon" style="font-size:18px">contrast</i></button>' +
+          '<button class="icon-circle" type="button" title="Solicitudes" onclick="go(\'reqs\')">' +
+            '<i class="icon" style="font-size:19px">notifications</i>' +
+            (reqCount ? '<span class="dot"></span>' : '') +
+          '</button>' +
+          '<button class="user-pill" type="button" onclick="go(\'sets\')">' +
+            '<span class="avatar-circle">NJ</span>' +
+            '<span class="user-pill-txt"><b>Nando JM</b><small>Administrador</small></span>' +
+          '</button>' +
+        '</div>' +
+      '</header>';
+
+    $('#app').innerHTML =
+      '<div class="app-shell">' +
+        sidebarHtml +
+        '<div class="workspace">' +
+          topbarHtml +
+          '<div class="content-area">' + viewHtml + '</div>' +
+        '</div>' +
+      '</div>';
+
+    ['home','reqs','accts','clients','sets'].forEach(function(k, idx){
+      var btn = $('#n' + (idx + 1));
+      if (btn) btn.className = 'nav-btn' + (view === k ? ' on' : '');
+    });
+    var dot = $('#reqDot'); if (dot) dot.style.display = reqCount ? 'block' : 'none';
+  } catch (err) {
+    console.error('Render error:', err);
+    $('#app').innerHTML = '<div class="content-area"><div class="card" style="text-align:center"><h2>Error al mostrar datos</h2><p>' + esc(err.message) + '</p><button class="btn" style="margin-top:16px" onclick="localStorage.removeItem(KEY);location.reload()">Restablecer vista local</button></div></div>';
+  }
+}
+function go(v){ view = v; render(); window.scrollTo(0,0); }
+function openS(h){ $('#sheet').innerHTML = '<div class="bk" onclick="closeS()"></div><div class="pan">' + h + '</div>'; $('#sheet').className = 'on'; }
+function closeS(){ $('#sheet').className = ''; $('#sheet').innerHTML = ''; if (vaultTimer) clearInterval(vaultTimer); }
+function findAcc(id){ return S.accounts.filter(function(c){ return c.id === id; })[0]; }
+
+function editAcc(id){
+  var c = findAcc(id), fam = c && c.mode === 'fam'; SEL = c && c.logo || '';
+  openS('<h2>' + (c ? 'Editar cuenta' : 'Nueva cuenta') + '</h2>' +
+    '<label>Nombre de la cuenta</label><input id="f1" value="' + esc(c ? c.name : '') + '" placeholder="Ej. Netflix 4K">' +
+    '<label>Plataforma / Icono</label>' + platPicker() +
+    '<label>Modo de acceso</label><select id="f12" onchange="modeSw()"><option value="cred"' + (fam ? '' : ' selected') + '>Con correo y contraseña</option><option value="fam"' + (fam ? ' selected' : '') + '>Grupo familiar</option></select>' +
+    '<div id="cred"' + (fam ? ' style="display:none"' : '') + '>' +
+      '<label>Correo o usuario maestro</label><input id="f4" autocapitalize="none" value="' + esc(c && c.login || '') + '">' +
+      '<label>Contraseña de la cuenta</label><div class="inp-eye"><input id="f5" type="password" autocomplete="off" placeholder="' + (c && c.pw ? 'Guardada. Escribe para cambiarla' : 'Se almacena cifrada') + '"><button class="eye-btn" type="button" onclick="toggleInp(\'f5\', this)"><i class="icon" style="font-size:20px">visibility</i></button>' + (c && c.pw ? '<button class="mini" type="button" onclick="showPw(\'' + id + '\')">Ver guardada</button>' : '') + '</div>' +
+    '</div>' +
+    '<div class="grid-2"><div><label>Costo mensual</label><input id="f6" type="number" inputmode="decimal" value="' + (c && c.cost || '') + '"></div><div><label>Día de corte (1-31)</label><input id="f7" type="number" inputmode="numeric" min="1" max="31" value="' + (c && c.payDay || '') + '"></div></div>' +
+    '<div class="grid-2"><div><label>Límite de perfiles</label><input id="f9" type="number" inputmode="numeric" min="1" max="10" value="' + (c && c.slots || 4) + '"></div><div><label>Precio catálogo (por perfil)</label><input id="fCatPrice" type="number" inputmode="decimal" value="' + (c && c.catalogPrice || '') + '" placeholder="Ej. 85"></div></div>' +
+    '<label class="chk"><input type="checkbox" id="fShowCat"' + (c && c.hideCatalog ? '' : ' checked') + '> Mostrar en catálogo de clientes si hay lugares libres</label>' +
+    '<div class="acts"><button class="btn g" onclick="closeS()">Cancelar</button><button class="btn" onclick="saveAcc(\'' + id + '\')">Guardar</button></div>');
+}
+function saveAcc(id){
+  var v = { name: $('#f1').value.trim() || 'Cuenta', login: $('#f4') ? $('#f4').value.trim() : '', pw: $('#f12').value === 'fam' ? '' : ($('#f5') ? $('#f5').value : ''), cost: parseFloat($('#f6').value) || 0, payDay: Math.min(31, Math.max(0, parseInt($('#f7').value) || 0)), slots: Math.min(10, Math.max(1, parseInt($('#f9').value) || 4)), catalogPrice: parseFloat($('#fCatPrice').value) || 0, hideCatalog: !$('#fShowCat').checked, mode: $('#f12').value, logo: SEL };
+  function done(p){
+    var c = findAcc(id), isEdit = !!c;
+    if (!c) { c = { id: uid(), users: [] }; S.accounts.push(c); }
+    Object.assign(c, { name: v.name, login: v.login, cost: v.cost, payDay: v.payDay, slots: v.slots, catalogPrice: v.catalogPrice, hideCatalog: v.hideCatalog, mode: v.mode, logo: v.logo });
+    if (p) c.pw = p;
+    save(); closeS(); render(); toast('Cuenta guardada');
+    if (isEdit && v.pw && c.users && c.users.length) {
+      c.users.forEach(function(u){
+        var k = u.name.trim().toLowerCase(), uUid = S.portalMap[k];
+        if (uUid) {
+          refreshClientPortalSafe(k, uUid, c.id, v.pw);
+          sendNoticeToUid(uUid, 'Nueva contraseña — ' + c.name, 'Se actualizó la contraseña de ' + c.name + '. Ya puedes verla en tu pestaña de Inicio.', S.clientEmails[k]);
+        }
+      });
+      toast('Aviso automático enviado a portales activos');
+    }
+  }
+  if (v.pw) withKey(function(){ enc(v.pw).then(done); }); else done(null);
+}
+
+function editUser(cid, id){ if (id) showUserSummary(cid, id); else showUserForm(cid, ''); }
+function showUserSummary(cid, id){
+  var c = findAcc(cid), u = c.users.filter(function(x){ return x.id === id; })[0], deb = getDebt(u);
+  openS('<div style="text-align:center;margin:10px 0 20px"><h2 style="margin:0;font-size:24px">' + esc(u.name) + '</h2><p style="margin-top:4px">' + (u.pfl ? 'Perfil: ' + esc(u.pfl) : 'Sin perfil') + (u.pin ? ' (PIN ' + esc(u.pin) + ')' : '') + '</p></div>' +
+  '<div class="card"><div class="tt"><span>Monto mensual</span><b>' + money(u.amount) + '</b></div><div class="tt"><span>Día de cobro</span><b>Día ' + u.day + '</b></div><div class="tt"><span>Estado</span><b style="color:' + (deb.count > 0 ? 'var(--bad)' : 'var(--ok)') + '">' + (deb.count > 0 ? 'Debe ' + deb.count + ' meses' : 'Al corriente') + '</b></div></div>' +
+  '<button class="btn g" style="width:100%;margin-bottom:12px" onclick="showUserForm(\'' + cid + '\',\'' + id + '\')"><i class="icon">edit</i> Editar datos</button>' +
+  '<div style="display:flex;gap:8px;flex-direction:column"><button class="btn" style="justify-content:flex-start" onclick="ticket(\'' + cid + '\',\'' + id + '\')"><i class="icon">receipt_long</i> Estado de cuenta de este servicio</button><button class="btn g" style="justify-content:flex-start" onclick="ticketCliFor(\'' + cid + '\',\'' + id + '\')"><i class="icon">account_balance_wallet</i> Estado de cuenta consolidado</button><button class="btn g" style="justify-content:flex-start" onclick="welcomeCard(\'' + cid + '\',\'' + id + '\')"><i class="icon">celebration</i> Tarjeta de bienvenida</button></div>' +
+  '<div class="acts"><button class="btn g" onclick="closeS()">Cerrar</button></div>');
+}
+function fillExistingClient(sel){
+  var val = sel.value; if (!val) return;
+  var p = JSON.parse(val);
+  if ($('#uf1')) $('#uf1').value = p.name || '';
+  if ($('#uf9')) $('#uf9').value = p.phone || '';
+}
+function showUserForm(cid, id){
+  var c = findAcc(cid), u = id ? c.users.filter(function(x){ return x.id === id; })[0] : null, curM = mk(today()), start = (u && u.startMonth) || curM, paused = u ? !!u.paused : false;
+  var existingHtml = '';
+  if (!u) {
+    buildClientList();
+    if (CL.length) {
+      var opts = '<option value="">— Escribir cliente nuevo —</option>' + CL.map(function(g){
+        return '<option value="' + esc(JSON.stringify({ name: g.name, phone: g.phone })) + '">' + esc(g.name) + (g.phone ? ' (' + esc(g.phone) + ')' : '') + '</option>';
+      }).join('');
+      existingHtml = '<label>Elegir cliente ya registrado (opcional)</label><select onchange="fillExistingClient(this)">' + opts + '</select>';
+    }
+  }
+  openS('<h2>' + (u ? 'Editar usuario' : 'Nuevo usuario en ' + esc(c.name)) + '</h2>' +
+    existingHtml +
+    '<label>Nombre completo</label><input id="uf1" value="' + esc(u ? u.name : '') + '">' +
+    '<label>WhatsApp (10 dígitos)</label><input id="uf9" type="tel" inputmode="numeric" value="' + esc(u && u.phone || '') + '">' +
+    '<div class="grid-2"><div><label>Perfil</label><input id="uf10" value="' + esc(u && u.pfl || '') + '"></div><div><label>PIN</label><input id="uf11" inputmode="numeric" value="' + esc(u && u.pin || '') + '"></div></div>' +
+    '<div class="grid-2"><div><label>Monto mensual</label><input id="uf2" type="number" inputmode="decimal" value="' + (u ? u.amount : (c.catalogPrice || '')) + '"></div><div><label>Día de cobro (1-31)</label><input id="uf3" type="number" inputmode="numeric" min="1" max="31" value="' + (u ? u.day : (c.payDay || '')) + '"></div></div>' +
+    '<div class="grid-2"><div><label>Cobrar desde</label><input id="ufStart" type="month" value="' + start + '"></div><div><label>Estado</label><select id="ufPaused"><option value="0"' + (!paused ? ' selected' : '') + '>Activo</option><option value="1"' + (paused ? ' selected' : '') + '>Pausado</option></select></div></div>' +
+    (!u ? '<label class="chk"><input type="checkbox" id="ufCurPaid" checked> Arranca al corriente</label>' : '') +
+    '<div class="acts"><button class="btn g" onclick="' + (u ? 'showUserSummary(\'' + cid + '\',\'' + id + '\')' : 'closeS()') + '">Cancelar</button><button class="btn" onclick="saveUser(\'' + cid + '\',\'' + id + '\')">Guardar</button></div>');
+}
+function saveUser(cid, id){
+  var c = findAcc(cid), n = $('#uf1').value.trim() || 'Usuario', a = parseFloat($('#uf2').value) || 0, d = Math.min(31, Math.max(1, parseInt($('#uf3').value) || 1)), phone = $('#uf9').value.replace(/\D/g, ''), pfl = $('#uf10').value.trim(), pin = $('#uf11').value.trim(), startMonth = $('#ufStart').value || mk(today()), paused = $('#ufPaused').value === '1', isCurPaidBox = $('#ufCurPaid') ? $('#ufCurPaid').checked : false;
+  var u = id ? c.users.filter(function(x){ return x.id === id; })[0] : null, data = { name: n, amount: a, day: d, phone: phone, pfl: pfl, pin: pin, startMonth: startMonth, paused: paused };
+  if (u) Object.assign(u, data); else c.users.push(Object.assign({ id: uid(), paidMonths: isCurPaidBox ? [startMonth] : [] }, data));
+  save(); render(); if (u) showUserSummary(cid, id); else closeS(); toast('Usuario guardado');
+}
+function delUser(cid, id){ var c = findAcc(cid); c.users = c.users.filter(function(x){ return x.id !== id; }); save(); closeS(); render(); toast('Usuario eliminado'); }
+
+/* BÓVEDA */
+var vaultTimer = null;
+function openVault(){
+  withKey(function(){
+    var accs = S.accounts.filter(function(c){ return c.mode !== 'fam' && (c.login || c.pw); }), secLeft = 30;
+    var h = '<h2><i class="icon" style="color:var(--primary)">lock_open</i> Bóveda de contraseñas</h2><p style="display:flex;justify-content:space-between;align-items:center"><span>Credenciales protegidas</span><b id="vCountdown" class="chip warn">Se cerrará en 30s</b></p><div style="height:12px"></div>';
+    h += !accs.length ? '<div class="empty"><p>No tienes contraseñas guardadas.</p></div>' : accs.map(function(c){
+      return '<div class="vault"><div class="vr"><span style="display:flex;align-items:center;gap:10px">' + badge(c, 1) + '<b>' + esc(c.name) + '</b></span>' + (c.login ? '<button class="mini" onclick="copyTxt(decodeURIComponent(\'' + encodeURIComponent(c.login) + '\'))">Copiar usuario</button>' : '') + '</div>' + (c.login ? '<div class="vr"><span>Usuario: <code>' + esc(c.login) + '</code></span></div>' : '') + (c.pw ? '<div class="vr"><span>Clave: <code id="pwv-' + c.id + '">••••••••</code></span><span><button class="mini" onclick="toggleVaultPw(\'' + c.id + '\')">Ver</button> <button class="mini" onclick="pwCopy(\'' + c.id + '\')">Copiar</button></span></div>' : '') + '</div>';
+    }).join('');
+    h += '<div class="acts"><button class="btn" onclick="closeS()">Cerrar bóveda</button></div>';
+    openS(h);
+    if (vaultTimer) clearInterval(vaultTimer);
+    vaultTimer = setInterval(function(){ secLeft--; var el = $('#vCountdown'); if (el) el.textContent = 'Se cerrará en ' + secLeft + 's'; if (secLeft <= 0) { clearInterval(vaultTimer); closeS(); toast('Bóveda bloqueada'); } }, 1000);
+  });
+}
+function toggleVaultPw(id){ var el = $('#pwv-' + id); if (!el) return; if (el.dataset.v) { el.textContent = '••••••••'; delete el.dataset.v; } else { pwGet(id, function(t){ el.textContent = t; el.dataset.v = "1"; }); } }
+var KEY_CRYPTO = null, pend = null, TK = '', TB = '';
+function b64(u){ return btoa(String.fromCharCode.apply(null, u)); }
+function ub(s){ return Uint8Array.from(atob(s), function(c){ return c.charCodeAt(0); }); }
+async function derive(pw, salt){ var m = await crypto.subtle.importKey('raw', new TextEncoder().encode(pw), 'PBKDF2', false, ['deriveKey']); return crypto.subtle.deriveKey({ name: 'PBKDF2', salt: ub(salt), iterations: 150000, hash: 'SHA-256' }, m, { name: 'AES-GCM', length: 256 }, false, ['encrypt','decrypt']); }
+async function enc(t){ var iv = crypto.getRandomValues(new Uint8Array(12)), c = await crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv }, KEY_CRYPTO, new TextEncoder().encode(t)); return b64(iv) + '.' + b64(new Uint8Array(c)); }
+async function dec(s){ var p = s.split('.'), d = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: ub(p[0]) }, KEY_CRYPTO, ub(p[1])); return new TextDecoder().decode(d); }
+function say(t){ var m = $('#msg'); if (m) m.textContent = t; }
+function withKey(fn){
+  if (KEY_CRYPTO) { fn(); return; }
+  pend = fn; var n = !S.vault;
+  openS('<h2>' + (n ? 'Crea tu clave maestra' : 'Desbloquear contraseñas') + '</h2><p>' + (n ? 'Protege tus contraseñas con cifrado.' : 'Escribe tu clave maestra.') + '</p><label>Clave maestra</label><div class="inp-eye"><input id="mf1" type="password" autocomplete="off"><button class="eye-btn" type="button" onclick="toggleInp(\'mf1\', this)"><i class="icon" style="font-size:20px">visibility</i></button></div>' + (n ? '<label>Repite la clave</label><div class="inp-eye"><input id="mf2" type="password" autocomplete="off"><button class="eye-btn" type="button" onclick="toggleInp(\'mf2\', this)"><i class="icon" style="font-size:20px">visibility</i></button></div>' : '') + '<div class="acts"><button class="btn g" onclick="pend=null;closeS()">Cancelar</button><button class="btn" onclick="doUnlock()">Continuar</button></div><p id="msg" style="margin-top:10px;color:var(--bad)"></p>');
+}
+async function doUnlock(){
+  var p = $('#mf1').value; if (!p) { say('Escribe tu clave.'); return; }
+  try {
+    if (!S.vault) { if (p.length < 6 || p !== $('#mf2').value) { say('Mínimo 6 caracteres y repítela igual.'); return; } var salt = b64(crypto.getRandomValues(new Uint8Array(16))); KEY_CRYPTO = await derive(p, salt); S.vault = { salt: salt, check: await enc('ok') }; save(); }
+    else { KEY_CRYPTO = await derive(p, S.vault.salt); if (await dec(S.vault.check) !== 'ok') throw 0; }
+  } catch (e) { KEY_CRYPTO = null; say('Clave incorrecta.'); return; }
+  var f = pend; pend = null; closeS(); if (f) f();
+}
+function showPw(id){ var fill = function(){ dec(findAcc(id).pw).then(function(t){ var e = $('#f5'); e.value = t; e.type = 'text'; }); }; if (KEY_CRYPTO) fill(); else withKey(function(){ editAcc(id); fill(); }); }
+function orow(c, nm){ if (!c.payDay) return ''; var t = today(), paid = c.paidFor === mk(t), d = dueDate(t.getFullYear(), t.getMonth() + (paid ? 1 : 0), c.payDay), diff = Math.round((d - t) / 864e5); var ochip = paid ? '<span class="chip ok">Al corriente</span>' : (diff < 0 ? '<span class="chip bad">Vencida</span>' : '<span class="chip ok">Activa</span>'); return '<div class="row" style="border-left:3px solid var(--primary)">' + (nm ? badge(c, 1) : '') + '<div class="grow" onclick="editAcc(\'' + c.id + '\')"><b>' + (nm ? esc(c.name) : 'Mi pago del servicio') + '</b><small><span>' + money(c.cost) + '</span><span>' + (paid ? 'Próximo ' : 'Vence ') + fmt(d) + '</span></small></div>' + ochip + '<button class="mini" onclick="payOwn(\'' + c.id + '\')">' + (paid ? 'Deshacer' : 'Ya pagué') + '</button></div>'; }
+function cinfo(c){ if ((c.login || c.pw) && c.mode !== 'fam') return '<div class="vault">' + (c.login ? '<div class="vr"><span>👤 <code>' + esc(c.login) + '</code></span><button class="mini" onclick="copyTxt(decodeURIComponent(\'' + encodeURIComponent(c.login) + '\'))">Copiar</button></div>' : '') + (c.pw ? '<div class="vr"><span>🔑 <code id="pw-' + c.id + '">••••••••</code></span><span><button class="mini" onclick="pwView(\'' + c.id + '\')">Ver</button> <button class="mini" onclick="pwCopy(\'' + c.id + '\')">Copiar</button></span></div>' : '') + '</div>'; return ''; }
+function payOwn(id){ vib(40); var c = findAcc(id); c.paidFor = c.paidFor === mk(today()) ? null : mk(today()); save(); render(); }
+function ownBlock(tot){ var cost = 0; S.accounts.forEach(function(c){ cost += +c.cost || 0; }); if (!cost) return ''; return '<div class="strip" style="grid-template-columns:1fr 1fr"><div><b>' + money(cost) + '</b><small>Mi costo al mes</small></div><div><b style="color:var(--ok)">' + money(tot - cost) + '</b><small>Ganancia neta</small></div></div>'; }
+
+/* PORTAL, CÓDIGO DE ACTIVACIÓN DE 8 CARACTERES Y ETIQUETAS */
+function openPortalPublish(gi){
+  var g = CL[gi]; if (!g) return;
+  var key = g.name.toLowerCase(), savedUid = (S.portalMap && S.portalMap[key]) || '', curTag = (S.clientTags && S.clientTags[key]) || '';
+  openS('<h2>Portal Web — ' + esc(g.name) + '</h2>' +
+    '<label>Etiqueta del cliente</label><select id="pTag"><option value=""' + (!curTag ? ' selected' : '') + '>Normal</option><option value="prueba"' + (curTag === 'prueba' ? ' selected' : '') + '>Cliente de prueba</option><option value="vip"' + (curTag === 'vip' ? ' selected' : '') + '>Cliente VIP</option></select>' +
+    '<label class="chk"><input type="checkbox" id="pIncPw" checked> Incluir correos y contraseñas de sus servicios</label>' +
+    '<div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--line)">' +
+      (savedUid ? '<p style="color:var(--ok);margin-bottom:10px">✓ Portal ya vinculado (UID: ' + esc(savedUid.slice(0,8)) + '...)</p><div class="grid-2"><button class="btn" onclick="publishPortal(' + gi + ')"><i class="icon">cloud_upload</i> Actualizar portal</button><button class="btn g" onclick="openSendNotice(\'cli\',' + gi + ')"><i class="icon">campaign</i> Enviar aviso</button></div>'
+      : '<p style="margin-bottom:10px">Genera un código único para que <b>' + esc(g.name) + '</b> cree su propia cuenta sin que entres a Firebase:</p><button class="btn" style="width:100%" onclick="generateInviteCode(' + gi + ')"><i class="icon">vpn_key</i> Generar código de activación</button>') +
+    '</div>' +
+    '<details style="margin-top:16px"><summary style="color:var(--mu);font-size:12px;cursor:pointer">Opciones avanzadas (UID manual)</summary><label>UID manual</label><input id="pUid" value="' + esc(savedUid) + '"><button class="btn g" style="width:100%;margin-top:10px" onclick="publishPortal(' + gi + ')">Guardar UID / Etiqueta</button></details>' +
+    '<div class="acts"><button class="btn g" onclick="closeS()">Cerrar</button></div>');
+}
+
+async function generateInviteCode(gi){
+  var g = CL[gi], key = g.name.toLowerCase(), tag = $('#pTag').value, incPw = $('#pIncPw').checked;
+  if (!S.clientTags) S.clientTags = {}; S.clientTags[key] = tag; save();
+  var d = cliData(g);
+  if (incPw) {
+    var needsKey = d.rows.some(function(r){ return r.mode !== 'fam' && r.hasPw; });
+    if (needsKey && !KEY_CRYPTO) { withKey(function(){ openPortalPublish(gi); }); return; }
+    for (var i = 0; i < d.rows.length; i++) { var r = d.rows[i]; if (r.mode !== 'fam' && r.hasPw) { var c = findAcc(r.cid); if (c && c.pw) r.pw = await dec(c.pw); } }
+  }
+  var code = 'PASS-' + Math.random().toString(36).slice(2, 10).toUpperCase();
+  try {
+    await db.collection('invites').doc(code).set({ code: code, clientKey: key, clientName: g.name, portalData: d, used: false, createdAt: Date.now() });
+    var url = location.href.split('?')[0];
+    var msg = '¡Hola ' + g.name + '! Ya tienes listo tu portal de Passly para ver tus accesos y pagos.\n\n1. Entra aquí: ' + url + '\n2. Toca "Activar con código"\n3. Usa este código: ' + code + '\n\nCrea tu correo y contraseña y listo.';
+    openS('<h2>Código generado</h2><p>Envía este código a <b>' + esc(g.name) + '</b> para que active su cuenta:</p><div class="code-box">' + code + '</div><div class="acts"><button class="btn g" onclick="copyTxt(decodeURIComponent(\'' + encodeURIComponent(msg) + '\'))"><i class="icon">content_copy</i> Copiar mensaje</button></div>' + (g.phone ? '<a class="btn w" style="margin-top:10px;display:flex" target="_blank" rel="noopener" href="' + waLink(g.phone, msg) + '"><i class="icon">chat</i> Enviar por WhatsApp</a>' : '') + '<div class="acts"><button class="btn g" onclick="closeS()">Listo</button></div>');
+  } catch (e) { toast('Error al generar código: revisa tus reglas de Firestore'); }
+}
+
+async function publishPortal(gi){
+  var clientUid = ($('#pUid') && $('#pUid').value ? $('#pUid').value.trim() : '') || (S.portalMap[CL[gi].name.toLowerCase()] || '');
+  var tag = $('#pTag').value, incPw = $('#pIncPw').checked, g = CL[gi], key = g.name.toLowerCase();
+  if (!S.clientTags) S.clientTags = {}; S.clientTags[key] = tag;
+  if (!clientUid) { save(); closeS(); render(); toast('Etiqueta guardada'); return; }
+  var d = cliData(g);
+  if (incPw) {
+    var needsKey = d.rows.some(function(r){ return r.mode !== 'fam' && r.hasPw; });
+    if (needsKey && !KEY_CRYPTO) { withKey(function(){ openPortalPublish(gi); }); return; }
+    for (var i = 0; i < d.rows.length; i++) { var r = d.rows[i]; if (r.mode !== 'fam' && r.hasPw) { var c = findAcc(r.cid); if (c && c.pw) r.pw = await dec(c.pw); } }
+  }
+  S.portalMap[key] = clientUid; save();
+  try {
+    await db.collection('portal').doc(clientUid).set(Object.assign({}, d, { updatedAt: Date.now() }));
+    closeS(); render(); toast('Portal actualizado en la nube');
+  } catch (e) { toast('Error al publicar: revisa tus reglas'); }
+}
+
+/* CLIENTES PLEGABLES + MINI-LOGOS + BUSCADOR */
+var CL = [], CT = null, PH = '';
+function buildClientList(){
+  var m = {};
+  S.accounts.forEach(function(c){
+    (c.users || []).forEach(function(u){
+      var k = u.name.trim().toLowerCase();
+      if (!m[k]) m[k] = { key: k, name: u.name.trim(), phone: '', it: [], tot: 0, debt: 0, pendingCur: 0, tag: (S.clientTags && S.clientTags[k]) || '' };
+      var g = m[k], b = getBillingInfo(u);
+      g.phone = g.phone || u.phone || '';
+      if (!u.paused) g.tot += +u.amount || 0;
+      g.debt += b.pastDebt;
+      g.pendingCur += b.curDue;
+      g.it.push({ c: c, u: u, deb: b.deb });
+    });
+  });
+  CL = Object.keys(m).map(function(k){ return m[k]; }).sort(function(a,b){ return a.name.localeCompare(b.name); });
+}
+
+function toggleCli(k){ CLI_EXP[k] = !CLI_EXP[k]; render(); }
+
+function clients(){
+  buildClientList();
+  var filters = [['all','Todos'],['late','Atrasados'],['pending','Pendientes'],['ok','Al corriente'],['prueba','Prueba'],['vip','VIP']];
+  var q = (CLI_SEARCH || '').trim().toLowerCase();
+  var h = '<div class="page-head"><div><h1>Clientes (' + CL.length + ')</h1><p>Toca cualquier cliente para ver sus servicios y acciones</p></div>' +
+    '<button class="btn" onclick="openQuickAddClient()"><i class="icon">person_add</i> Nuevo cliente</button></div>' +
+    '<div class="search-box"><i class="icon">search</i><input placeholder="Buscar por nombre o WhatsApp..." value="' + esc(CLI_SEARCH) + '" oninput="CLI_SEARCH=this.value;renderClientsListOnly()"></div>' +
+    '<div class="filter-bar">' + filters.map(function(f){ return '<button class="f-pill ' + (CLI_FILTER === f[0] ? 'on' : '') + '" onclick="CLI_FILTER=\'' + f[0] + '\';render()">' + f[1] + '</button>'; }).join('') + '</div>' +
+    '<div id="cliListWrap">' + renderClientsCards(q) + '</div>';
+  return h;
+}
+
+function renderClientsListOnly(){
+  var wrap = $('#cliListWrap');
+  if (wrap) wrap.innerHTML = renderClientsCards((CLI_SEARCH || '').trim().toLowerCase());
+}
+
+function renderClientsCards(q){
+  var filtered = CL.map(function(g, idx){ return { g: g, idx: idx }; }).filter(function(item){
+    var g = item.g;
+    if (q && g.name.toLowerCase().indexOf(q) === -1 && (g.phone || '').indexOf(q) === -1) return false;
+    if (CLI_FILTER === 'late') return g.debt > 0;
+    if (CLI_FILTER === 'pending') return g.debt === 0 && g.pendingCur > 0;
+    if (CLI_FILTER === 'ok') return g.debt === 0 && g.pendingCur === 0;
+    if (CLI_FILTER === 'prueba') return g.tag === 'prueba';
+    if (CLI_FILTER === 'vip') return g.tag === 'vip';
+    return true;
+  });
+
+  if (!filtered.length) return '<div class="empty"><p>No hay clientes que coincidan.</p></div>';
+
+  return filtered.map(function(item){
+    var g = item.g, gi = item.idx, exp = !!CLI_EXP[g.key];
+    var stChip = g.debt > 0 ? '<span class="chip bad">Atrasado ' + money(g.debt + g.pendingCur) + '</span>' : (g.pendingCur > 0 ? '<span class="chip warn">Pendiente ' + money(g.pendingCur) + '</span>' : '<span class="chip ok">Al corriente</span>');
+    var tChip = g.tag === 'prueba' ? '<span class="chip info">Prueba</span>' : (g.tag === 'vip' ? '<span class="chip ok">VIP</span>' : '');
+    var hasPortal = !!(S.portalMap && S.portalMap[g.key]);
+
+    var miniLogos = '<div class="logo-strip" onclick="toggleCli(\'' + esc(g.key) + '\')" style="cursor:pointer">' +
+      g.it.map(function(x){ return badge(x.c, 2); }).join('') +
+      '<span style="color:var(--mu);font-size:12px;margin-left:4px">' + g.it.length + (g.it.length === 1 ? ' servicio' : ' servicios') + (hasPortal ? ' • Portal activo' : '') + '</span>' +
+    '</div>';
+
+    var body = '';
+    if (exp) {
+      body = '<div style="margin-top:12px">' + g.it.map(function(x){
+        return '<div class="row ' + (x.u.paused ? 'paused' : '') + '">' + badge(x.c, 1) +
+          '<div class="grow" onclick="editUser(\'' + x.c.id + '\',\'' + x.u.id + '\')"><b>' + esc(x.c.name) + '</b><small><span>' + money(x.u.amount) + '</span><span>Corte día ' + x.u.day + '</span></small></div>' +
+          userChip(x.deb, x.u) + '<button class="mini" onclick="ticket(\'' + x.c.id + '\',\'' + x.u.id + '\')">Ticket</button></div>';
+      }).join('') +
+      '<div class="grid-2" style="margin-top:10px"><button class="btn" onclick="ticketCli(' + gi + ')"><i class="icon">receipt</i> Estado de cuenta</button><button class="btn g" onclick="openPortalPublish(' + gi + ')"><i class="icon">public</i> Portal / Código</button></div></div>';
+    }
+
+    return '<div class="card">' +
+      '<div class="card-header">' +
+        '<div class="grow" onclick="toggleCli(\'' + esc(g.key) + '\')"><b>' + esc(g.name) + '</b><small><span>' + money(g.tot) + '/mes</span>' + (g.phone ? '<span>' + esc(g.phone) + '</span>' : '') + tChip + '</small></div>' +
+        stChip +
+        '<button class="mini" style="width:34px;height:34px;padding:0" onclick="toggleCli(\'' + esc(g.key) + '\')"><i class="icon">' + (exp ? 'expand_less' : 'expand_more') + '</i></button>' +
+      '</div>' + (exp ? body : miniLogos) + '</div>';
+  }).join('');
+}
+
+function cliData(g){
+  var pastDebt = 0, curDue = 0;
+  var rows = g.it.map(function(x){
+    var b = getBillingInfo(x.u); pastDebt += b.pastDebt; curDue += b.curDue;
+    return { cid: x.c.id, svc: x.c.name, pfl: x.u.pfl || '', pin: x.u.pin || '', amt: +x.u.amount || 0, pastDebt: b.pastDebt, curDue: b.curDue, totalPay: b.totalPay, statusText: b.statusText, shortStatus: b.shortStatus, badgeCls: b.badgeCls, nextCycleText: b.nextCycleText, isUpToDate: b.isUpToDate, paused: !!x.u.paused, logo: x.c.logo || '', mode: x.c.mode || 'cred', login: x.c.login || '', hasPw: !!x.c.pw, pw: '' };
+  });
+  var s = S.settings || {};
+  return { name: g.name, phone: g.phone || '', tag: (S.clientTags && S.clientTags[g.name.toLowerCase()]) || '', date: new Date().toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' }), rows: rows, tot: g.tot, pastDebt: pastDebt, curDue: curDue, totalPay: pastDebt + curDue, incPw: false, owner: s.owner || '', bank: s.bank || '', clabe: s.clabe || '', mpLink: s.mpLink || '', adminWa: s.adminWa || '' };
+}
+
+function ticket(cid, id){
+  var c = findAcc(cid), u = c.users.filter(function(x){ return x.id === id; })[0], bill = getBillingInfo(u);
+  TB = 'ESTADO DE CUENTA — Passly\nCliente: ' + u.name + '\nServicio: ' + c.name + (u.pfl ? ' (' + u.pfl + (u.pin ? ' • PIN ' + u.pin : '') + ')' : '') + '\nEstatus: ' + bill.statusText + '\n\n• Saldo vencido: ' + money(bill.pastDebt) + '\n• Ciclo actual: ' + money(bill.curDue) + '\n• Total a pagar: ' + (bill.isUpToDate ? '$0 (Al corriente)' : money(bill.totalPay)) + payInfo();
+  TK = TB; PH = u.phone || '';
+  var opt = (c.mode !== 'fam' && (c.login || c.pw)) ? (c.pw && !KEY_CRYPTO ? '<button class="mini" style="margin-top:14px" onclick="withKey(function(){ticket(\'' + cid + '\',\'' + id + '\')})">Desbloquear para adjuntar clave</button>' : '<label class="chk"><input type="checkbox" id="inc" onchange="tkPw(\'' + cid + '\')"> Incluir usuario y contraseña</label>') : '';
+  openS('<h2>Estado de cuenta</h2><div class="tkc" style="white-space:pre-wrap;font-family:ui-monospace,monospace;font-size:13px" id="tk"></div>' + opt + '<div class="acts"><button class="btn g" onclick="copyTxt(TK)"><i class="icon">content_copy</i> Copiar</button></div>' + (u.phone ? '<a class="btn w" id="wa" target="_blank" rel="noopener" style="margin-top:10px;display:flex" href="' + waLink(u.phone, TK) + '"><i class="icon">chat</i> Enviar por WhatsApp</a>' : ''));
+  showTk();
+}
+function tkPw(cid){ var c = findAcc(cid); if (!$('#inc').checked) { TK = TB; showTk(); return; } var add = function(p){ TK = TB + '\n\nAcceso:\n• Usuario: ' + (c.login || '-') + (p ? '\n• Contraseña: ' + p : ''); showTk(); }; if (c.pw) dec(c.pw).then(add); else add(''); }
+function waLink(p, t){ p = String(p || '').replace(/\D/g, ''); if (p.length === 10) p = '52' + p; return 'https://wa.me/' + p + '?text=' + encodeURIComponent(t); }
+function showTk(){ var el = $('#tk'); if (el) el.textContent = TK; var a = $('#wa'); if (a) a.href = waLink(PH, TK); }
+function payInfo(){ var s = S.settings || {}, a = []; if (s.owner) a.push('Titular: ' + s.owner); if (s.bank) a.push('Banco: ' + s.bank); if (s.clabe) a.push('CLABE/Cuenta: ' + s.clabe); if (s.mpLink) a.push('Mercado Pago: ' + s.mpLink); return a.length ? '\n\nDatos de pago:\n' + a.join('\n') : ''; }
+function toast(t){ var e = document.createElement('div'); e.className = 'toast'; e.textContent = t; document.body.appendChild(e); setTimeout(function(){ e.remove(); }, 2300); }
+function copyTxt(t){ vib(30); if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(function(){ toast('Copiado'); }); else { var a = document.createElement('textarea'); a.value = t; document.body.appendChild(a); a.select(); try { document.execCommand('copy'); toast('Copiado'); } catch(e){} a.remove(); } }
+function pwGet(id, fn){ var c = findAcc(id); withKey(function(){ dec(c.pw).then(fn); }); }
+function pwView(id){ var e = $('#pw-' + id); if (e.dataset.v) { e.textContent = '••••••••'; delete e.dataset.v; return; } pwGet(id, function(t){ e.textContent = t; e.dataset.v = "1"; setTimeout(function(){ e.textContent = '••••••••'; delete e.dataset.v; }, 15000); }); }
+function pwCopy(id){ pwGet(id, copyTxt); }
+
+function welcomeCard(cid, id){
+  var c = findAcc(cid), u = c.users.filter(function(x){ return x.id === id; })[0];
+  var showModal = function(pwText){
+    var text = '🎉 ¡Bienvenido a tu suscripción!\nHola ' + u.name + ', ya está listo tu acceso:\n\n• Servicio: ' + c.name + '\n' + (u.pfl ? '• Perfil: ' + u.pfl + (u.pin ? ' (PIN ' + u.pin + ')\n' : '\n') : '') + (c.mode !== 'fam' ? '• Usuario: ' + (c.login || '-') + '\n• Contraseña: ' + (pwText || '••••••••') + '\n' : '') + '• Mensualidad: ' + money(u.amount) + '\n• Día de cobro: ' + u.day + ' de cada mes' + payInfo();
+    openS('<h2>Tarjeta de bienvenida</h2><div class="tkc" style="white-space:pre-wrap;font-family:ui-monospace,monospace;font-size:13px">' + esc(text) + '</div><div class="acts"><button class="btn g" onclick="copyTxt(decodeURIComponent(\'' + encodeURIComponent(text) + '\'))">Copiar</button></div>' + (u.phone ? '<a class="btn w" target="_blank" rel="noopener" style="margin-top:10px;display:flex" href="' + waLink(u.phone, text) + '"><i class="icon">chat</i> WhatsApp</a>' : ''));
+  };
+  if (c.mode !== 'fam' && c.pw) { if (KEY_CRYPTO) dec(c.pw).then(showModal); else withKey(function(){ dec(c.pw).then(showModal); }); } else showModal('');
+}
+function pwdNotice(cid){
+  var c = findAcc(cid);
+  var showModal = function(pwText){
+    var text = '📢 AVISO DE ACTUALIZACIÓN DE ACCESO\nServicio: ' + c.name + '\n\n👤 Usuario: ' + (c.login || '-') + '\n🔑 Nueva contraseña: ' + (pwText || '-');
+    openS('<h2>Aviso de nueva contraseña</h2><div class="tkc" style="white-space:pre-wrap;font-family:ui-monospace,monospace;font-size:13px">' + esc(text) + '</div><div class="acts"><button class="btn g" onclick="copyTxt(decodeURIComponent(\'' + encodeURIComponent(text) + '\'))">Copiar</button></div>');
+  };
+  if (c.pw) { if (KEY_CRYPTO) dec(c.pw).then(showModal); else withKey(function(){ dec(c.pw).then(showModal); }); } else showModal('');
+}
+
+function cliText(){
+  var d = CT, lines = ['ESTADO DE CUENTA — Passly', 'Cliente: ' + d.name, 'Fecha: ' + d.date, '', 'Detalle de servicios:'];
+  d.rows.forEach(function(r){ lines.push('• ' + r.svc + (r.pfl ? ' [' + r.pfl + ']' : '') + ': ' + (r.isUpToDate ? 'Al corriente — Próx: ' + r.nextCycleText : money(r.totalPay) + ' (' + r.statusText + ')')); });
+  lines.push('', 'Saldo vencido: ' + money(d.pastDebt), 'Ciclo actual: ' + money(d.curDue), 'TOTAL A PAGAR: ' + (d.totalPay > 0 ? money(d.totalPay) : '$0 (Al corriente)'));
+  if (d.incPw) { var creds = d.rows.filter(function(r){ return r.mode !== 'fam' && (r.login || r.pw); }); if (creds.length) { lines.push('', 'Accesos:'); creds.forEach(function(r){ lines.push('— ' + r.svc + ': ' + (r.login || '-') + (r.pw ? ' / ' + r.pw : '')); }); } }
+  return lines.join('\n') + payInfo();
+}
+async function toggleCliPw(){ var chk = $('#incCli'); if (!chk || !chk.checked) { CT.incPw = false; updateCliUI(); return; } for (var i = 0; i < CT.rows.length; i++) { var r = CT.rows[i]; if (r.mode !== 'fam' && r.hasPw && !r.pw) { var c = findAcc(r.cid); if (c && c.pw) r.pw = await dec(c.pw); } } CT.incPw = true; updateCliUI(); }
+function updateCliUI(){ var a = $('#waCli'); if (a && CT.phone) a.href = waLink(CT.phone, cliText()); }
+function ticketCli(i){
+  var g = CL[i]; if (!g) return; CT = cliData(g); var d = CT;
+  var hasAnyCred = d.rows.some(function(r){ return r.mode !== 'fam' && (r.login || r.hasPw); });
+  var needsUnlock = d.rows.some(function(r){ return r.mode !== 'fam' && r.hasPw; }) && !KEY_CRYPTO;
+  var optCred = hasAnyCred ? (needsUnlock ? '<button class="mini" style="margin-top:12px" onclick="withKey(function(){ticketCli(' + i + ')})">Desbloquear claves</button>' : '<label class="chk"><input type="checkbox" id="incCli" onchange="toggleCliPw()"> Incluir correos y contraseñas</label>') : '';
+  openS('<h2>Estado de cuenta — ' + esc(d.name) + '</h2><div class="tkc">' + d.rows.map(function(r){ return '<div class="tr">' + badge({ logo: r.logo, name: r.svc }, 1) + '<div class="grow"><b>' + esc(r.svc) + '</b><small>' + esc(r.statusText) + '</small></div><div class="ta"><b>' + (r.isUpToDate ? '$0' : money(r.totalPay)) + '</b><span class="chip ' + r.badgeCls + '">' + esc(r.shortStatus) + '</span></div></div>'; }).join('') + '<div class="tt"><span>Saldo vencido</span><b>' + money(d.pastDebt) + '</b></div><div class="tt"><span>Ciclo actual</span><b>' + money(d.curDue) + '</b></div><div class="tt total"><span>Total a pagar</span><b style="color:' + (d.totalPay > 0 ? 'var(--primary)' : 'var(--ok)') + '">' + (d.totalPay > 0 ? money(d.totalPay) : '$0') + '</b></div></div>' + optCred + '<div class="acts"><button class="btn g" onclick="copyTxt(cliText())"><i class="icon">content_copy</i> Copiar</button></div>' + (g.phone ? '<a class="btn w" id="waCli" target="_blank" rel="noopener" style="margin-top:10px;display:flex" href="' + waLink(g.phone, cliText()) + '"><i class="icon">chat</i> WhatsApp</a>' : ''));
+}
+function ticketCliFor(cid, uid){ var c = findAcc(cid), u = c.users.filter(function(x){ return x.id === uid; })[0], k = u.name.trim().toLowerCase(); buildClientList(); var idx = CL.findIndex(function(g){ return g.name.toLowerCase() === k; }); if (idx >= 0) ticketCli(idx); }
+
+function sets(){
+  var s = S.settings || {};
+  var curTheme = s.theme || localStorage.getItem('passly-theme-v7') || 'light';
+  var curAccent = s.accent || localStorage.getItem('passly-accent-v7') || '#2563eb';
+  var notifSt = ('Notification' in window) ? Notification.permission : 'unsupported';
+
+  var themePickerHtml = '<div class="theme-grid">' +
+    '<button type="button" class="th-btn' + (curTheme === 'light' ? ' on' : '') + '" onclick="setThemePref(\'light\',null)"><span class="th-dot" style="background:#f4f6fb"></span>Claro v7</button>' +
+    '<button type="button" class="th-btn' + (curTheme === 'oled' ? ' on' : '') + '" onclick="setThemePref(\'oled\',null)"><span class="th-dot" style="background:#000000"></span>Negro OLED</button>' +
+    '<button type="button" class="th-btn' + (curTheme === 'slate' ? ' on' : '') + '" onclick="setThemePref(\'slate\',null)"><span class="th-dot" style="background:#0b1120"></span>Grafito</button>' +
+  '</div>';
+
+  var accentPickerHtml = '<div class="swatch-row">' +
+    ACCENTS.map(function(sw){
+      return '<button type="button" class="sw' + (curAccent.toLowerCase() === sw[0] ? ' on' : '') + '" style="background:' + sw[0] + '" title="' + sw[1] + '" onclick="setThemePref(null,\'' + sw[0] + '\')"></button>';
+    }).join('') +
+    '<input type="color" class="sw-pick" value="' + esc(curAccent) + '" title="Color personalizado" onchange="setThemePref(null,this.value)">' +
+  '</div>';
+
+  return '<div class="page-head"><div><h1>Ajustes</h1><p>Apariencia, datos de cobro, seguridad y sesión</p></div></div>' +
+    '<div class="card">' +
+      '<h2 style="margin:0 0 8px">Apariencia</h2>' +
+      '<label>Tema de interfaz</label>' + themePickerHtml +
+      '<label>Color de acento</label>' + accentPickerHtml +
+    '</div>' +
+    '<div class="card">' +
+      '<h2 style="margin:0 0 8px">Datos de cobro</h2>' +
+      '<label>Nombre del titular</label><input id="s1" value="' + esc(s.owner || '') + '">' +
+      '<label>Banco receptor</label><input id="s2" value="' + esc(s.bank || '') + '">' +
+      '<label>CLABE o tarjeta</label><input id="s3" inputmode="numeric" value="' + esc(s.clabe || '') + '">' +
+      '<label>Link de pago Mercado Pago (opcional)</label><input id="sMp" value="' + esc(s.mpLink || '') + '" placeholder="https://link.mercadopago.com.mx/...">' +
+      '<label>Tu WhatsApp de soporte (10 dígitos)</label><input id="sWa" type="tel" inputmode="numeric" value="' + esc(s.adminWa || '') + '">' +
+      '<details style="margin-top:16px"><summary style="color:var(--primary);font-size:13px;font-weight:600;cursor:pointer">Envío de correos con EmailJS (Zoho SMTP)</summary>' +
+        '<label>Service ID</label><input id="sEjsS" value="' + esc(s.ejsService || '') + '">' +
+        '<label>Template ID</label><input id="sEjsT" value="' + esc(s.ejsTemplate || '') + '">' +
+        '<label>Public Key</label><input id="sEjsK" value="' + esc(s.ejsKey || '') + '">' +
+      '</details>' +
+      '<button class="btn" style="width:100%;margin-top:18px" onclick="saveSets()"><i class="icon">save</i> Guardar ajustes</button>' +
+    '</div>' +
+    '<div class="card">' +
+      (notifSt !== 'granted' ? '<button class="btn g" style="width:100%;margin-bottom:10px" onclick="askNotifPerm()"><i class="icon">notifications</i> Activar notificaciones en este teléfono</button>' : '') +
+      '<button class="btn g" style="width:100%;margin-bottom:10px" onclick="openLoginHistory()"><i class="icon">devices</i> Dispositivos con login</button>' +
+      '<button class="btn g" style="width:100%;margin-bottom:10px" onclick="openVault()"><i class="icon">lock_open</i> Bóveda de contraseñas</button>' +
+      '<button class="btn g" style="width:100%;margin-bottom:10px" onclick="backup()"><i class="icon">cloud_sync</i> Respaldo JSON</button>' +
+      '<button class="btn d" style="width:100%" onclick="doLogout()"><i class="icon">logout</i> Cerrar sesión</button>' +
+    '</div>';
+}
+function saveSets(){
+  var prevTheme = (S.settings && S.settings.theme) || localStorage.getItem('passly-theme-v7') || 'light';
+  var prevAccent = (S.settings && S.settings.accent) || localStorage.getItem('passly-accent-v7') || '#2563eb';
+  S.settings = {
+    theme: prevTheme,
+    accent: prevAccent,
+    owner: $('#s1').value.trim(), bank: $('#s2').value.trim(), clabe: $('#s3').value.trim(),
+    mpLink: $('#sMp').value.trim(), adminWa: $('#sWa').value.replace(/\D/g, ''),
+    ejsService: ($('#sEjsS') ? $('#sEjsS').value.trim() : ''),
+    ejsTemplate: ($('#sEjsT') ? $('#sEjsT').value.trim() : ''),
+    ejsKey: ($('#sEjsK') ? $('#sEjsK').value.trim() : '')
+  };
+  save(); toast('Ajustes guardados'); render();
+}
+function backup(){ openS('<h2>Respaldo JSON</h2><textarea id="bkText">' + esc(JSON.stringify(S)) + '</textarea><div class="acts"><button class="btn g" onclick="copyTxt($(\'#bkText\').value)">Copiar</button><button class="btn" onclick="imp()">Importar</button></div><p id="msg" style="margin-top:10px"></p>'); }
+function imp(){ try { var d = JSON.parse($('#bkText').value); if (!d || !Array.isArray(d.accounts)) throw 0; S = sanitizeState(d); S.lastBackup = Date.now(); applyTheme(); save(); closeS(); render(); toast('Datos restaurados'); } catch (e) { say('JSON inválido'); } }
+
+var SEL = '';
+var PLAT = [['netflix','Netflix','#e50914','N'],['hbo','Max','#002be7','max'],['prime','Prime Video','#00a8e1','prime'],['disney','Disney+','#113ccf','D+'],['spotify','Spotify','#1db954','S'],['youtube','YouTube','#ff0033','▶'],['apple','Apple TV+','#2c2c31','tv+'],['paramount','Paramount+','#0064ff','P+'],['crunchy','Crunchyroll','#f47521','CR'],['vix','ViX','#ff6a00','ViX'],['canva','Canva','#00a7b0','C'],['google','Google One','#4285f4','1']];
+function brand(l, n){ for (var i = 0; i < PLAT.length; i++) if (PLAT[i][0] === l) return { c: PLAT[i][2], t: PLAT[i][3] }; return { c: '#334155', t: (String(n||'?').trim().charAt(0).toUpperCase() || '?') }; }
+function badge(c, sz){
+  var cls = sz === 2 ? 'lg xs' : (sz === 1 ? 'lg sm' : 'lg');
+  var l = c.logo || '';
+  if (l.indexOf('data:') === 0) return '<img class="' + cls + '" src="' + l + '" alt="">';
+  var b = brand(l, c.name);
+  return '<span class="' + cls + '" style="background:' + b.c + '">' + esc(b.t) + '</span>';
+}
+function platPicker(){ var h = '<div class="plat">'; PLAT.forEach(function(p){ h += '<button type="button" class="pb' + (SEL === p[0] ? ' on' : '') + '" onclick="pickP(\'' + p[0] + '\')"><span class="lg sm" style="background:' + p[2] + '">' + esc(p[3]) + '</span>' + esc(p[1]) + '</button>'; }); return h + '</div><div style="display:flex;gap:8px;margin-top:10px"><button type="button" class="mini" onclick="document.getElementById(\'lf\').click()">Subir logo</button><button type="button" class="mini" onclick="pickP(\'\')">Quitar</button><input id="lf" type="file" accept="image/*" style="display:none" onchange="upLogo(this)"></div>'; }
+function pickP(k){ SEL = k; var btns = document.querySelectorAll('.plat .pb'); for (var i = 0; i < btns.length; i++) btns[i].className = 'pb' + (PLAT[i][0] === k ? ' on' : ''); }
+function upLogo(inp){ var f = inp.files && inp.files[0]; if (!f) return; var r = new FileReader(); r.onload = function(){ var im = new Image(); im.onload = function(){ var c = document.createElement('canvas'); c.width = c.height = 96; var x = c.getContext('2d'), m = Math.min(im.width, im.height); x.drawImage(im, (im.width - m) / 2, (im.height - m) / 2, m, m, 0, 0, 96, 96); pickP(c.toDataURL('image/png')); toast('Logo listo'); }; im.src = r.result; }; r.readAsDataURL(f); }
+function modeSw(){ var c = $('#cred'); if (c) c.style.display = $('#f12').value === 'fam' ? 'none' : ''; }
+
+/* =========================================================
+   ARRANQUE Y MANEJO DE SESIÓN SIN BLOQUEO EN MÓVIL
+   ========================================================= */
+async function handleUserSession(user){
+  if (!user) return;
+  if (ACTIVE_SESSION_UID === user.uid && USER_ROLE) return;
+  ACTIVE_SESSION_UID = user.uid;
+  CUR_USER = user;
+  LOGIN_LOADING = false;
+  LOGIN_MODAL = false;
+
+  if (user.uid === ADMIN_UID) {
+    USER_ROLE = 'admin';
+    S = sanitizeState(S);
+    applyTheme();
+    render();
+    recordLogin(user, 'admin', 'Administrador');
+    try {
+      var doc = await withTimeout(db.collection('admin').doc('datos').get(), 6000);
+      if (doc.exists) {
+        S = sanitizeState(doc.data());
+        applyTheme();
+        try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e) {}
+        render();
+      } else if (S.accounts && S.accounts.length) {
+        save();
+      }
+    } catch (e) { console.error('Admin sync load:', e); }
+    try {
+      syncCatalog();
+      startAdminInviteListener();
+      startAdminReqListener();
+    } catch (e) { console.error(e); }
+  } else {
+    USER_ROLE = 'client';
+    document.body.className = 'client-mode';
+    $('#mainNav').style.display = 'none';
+    $('#app').innerHTML = '<div class="content-area"><div class="card" style="text-align:center;padding:44px 20px"><div class="spinner lg-spin" style="margin:0 auto 14px"></div><h2 style="margin:0 0 6px">Cargando tu portal...</h2><p>Obteniendo tus servicios y estado de cuenta</p></div></div>';
+    try {
+      var results = await Promise.all([
+        withTimeout(db.collection('portal').doc(user.uid).get(), 6000).catch(function(){ return null; }),
+        withTimeout(db.collection('catalog').doc('public').get(), 6000).catch(function(){ return null; }),
+        loadClientReqs()
+      ]);
+      var pdoc = results[0], cdoc = results[1];
+      PORTAL_DATA = (pdoc && pdoc.exists) ? pdoc.data() : null;
+      CATALOG_DATA = (cdoc && cdoc.exists && cdoc.data().items) ? cdoc.data().items : [];
+      recordLogin(user, 'client', PORTAL_DATA ? PORTAL_DATA.name : user.email);
+      startClientNoticeListener();
+    } catch (e) { PORTAL_DATA = null; }
+    renderClientPortal();
+  }
+}
+
+renderLogin(false);
+
+if (FB_READY && auth) {
+  auth.onAuthStateChanged(function(user){
+    if (!user) {
+      ACTIVE_SESSION_UID = null;
+      CUR_USER = null;
+      USER_ROLE = null;
+      LOGIN_LOGGED = false;
+      LOGIN_LOADING = false;
+      renderLogin(false);
+      return;
+    }
+    handleUserSession(user);
+  });
+}
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function(){
+    navigator.serviceWorker.register('./sw.js').catch(function(){});
+  });
+}
+</script>
+</body>
+</html>
