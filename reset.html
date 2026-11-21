@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=0">
+<meta name="theme-color" id="metaTheme" content="#f4f6fb">
+<title>Restablecer contraseña — Passly</title>
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<style>
+:root{
+  --bg: #f4f6fb;
+  --surface: #ffffff;
+  --surface-c: #f8fafc;
+  --line: #e2e8f0;
+  --tx: #0f172a;
+  --mu: #64748b;
+  --primary: #2563eb;
+  --primary-2: #7c3aed;
+  --primary-container: rgba(37,99,235,0.11);
+  --on-primary: #ffffff;
+  --ok: #059669;
+  --ok-bg: #dcfce7;
+  --bad: #dc2626;
+  --bad-bg: #fee2e2;
+  --warn: #d97706;
+  --warn-bg: #fef3c7;
+  --shadow-md: 0 14px 38px rgba(15, 23, 42, 0.08);
+  --hero-grad: linear-gradient(135deg, rgba(37,99,235,0.12) 0%, rgba(124,58,237,0.10) 55%, var(--surface) 100%);
+  color-scheme: light;
+  box-sizing: border-box;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0}
+body{
+  min-height:100vh;
+  min-height:100dvh;
+  background:var(--bg);
+  color:var(--tx);
+  font:15px/1.45 'Plus Jakarta Sans',system-ui,-apple-system,sans-serif;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  padding:20px 16px;
+  transition:background .2s ease,color .2s ease;
+  position:relative;
+  overflow-x:hidden;
+}
+body::before{
+  content:'';
+  position:fixed;
+  top:-120px;
+  right:-120px;
+  width:380px;
+  height:380px;
+  background:radial-gradient(circle, rgba(124,58,237,0.15), rgba(37,99,235,0.12) 50%, transparent 72%);
+  border-radius:50%;
+  pointer-events:none;
+  z-index:0;
+}
+body::after{
+  content:'';
+  position:fixed;
+  bottom:-140px;
+  left:-120px;
+  width:360px;
+  height:360px;
+  background:radial-gradient(circle, rgba(37,99,235,0.14), transparent 70%);
+  border-radius:50%;
+  pointer-events:none;
+  z-index:0;
+}
+
+.top-float{
+  position:fixed;
+  top:max(14px, env(safe-area-inset-top, 14px));
+  right:16px;
+  z-index:10;
+  display:flex;
+  gap:8px;
+}
+.icon-circle{
+  width:40px;
+  height:40px;
+  border-radius:50%;
+  border:1px solid var(--line);
+  background:var(--surface);
+  color:var(--tx);
+  display:grid;
+  place-items:center;
+  cursor:pointer;
+  transition:transform .15s ease;
+  box-shadow:0 4px 12px rgba(0,0,0,0.06);
+}
+.icon-circle:active{transform:scale(.94)}
+
+.g-card{
+  position:relative;
+  z-index:1;
+  width:100%;
+  max-width:430px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:28px;
+  padding:30px 24px 26px;
+  box-shadow:var(--shadow-md);
+  overflow:hidden;
+  animation:popCard .24s ease;
+}
+@keyframes popCard{from{opacity:0;transform:translateY(10px) scale(.985)}to{opacity:1;transform:none}}
+
+.g-progress{
+  position:absolute;
+  top:0;
+  left:0;
+  right:0;
+  height:3px;
+  background:var(--primary-container);
+  overflow:hidden;
+}
+.g-progress::after{
+  content:'';
+  position:absolute;
+  top:0;
+  left:-40%;
+  width:40%;
+  height:100%;
+  background:var(--primary);
+  animation:passlyBar 1.1s infinite ease-in-out;
+}
+@keyframes passlyBar{0%{left:-40%}100%{left:100%}}
+
+.brand-head{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  margin-bottom:18px;
+}
+.brand-head img{
+  height:36px;
+  border-radius:10px;
+  object-fit:contain;
+}
+.brand-head b{
+  font-size:21px;
+  font-weight:800;
+  letter-spacing:-.5px;
+  color:var(--tx);
+}
+
+.status-ico{
+  width:56px;
+  height:56px;
+  border-radius:18px;
+  margin:0 auto 14px;
+  display:grid;
+  place-items:center;
+}
+.status-ico.primary{background:var(--primary-container);color:var(--primary)}
+.status-ico.ok{background:var(--ok-bg);color:var(--ok)}
+.status-ico.bad{background:var(--bad-bg);color:var(--bad)}
+.status-ico i{font-size:30px}
+
+h1{
+  text-align:center;
+  font-size:22px;
+  font-weight:800;
+  letter-spacing:-.4px;
+  margin:0 0 6px;
+  color:var(--tx);
+}
+.sub{
+  text-align:center;
+  font-size:13.5px;
+  color:var(--mu);
+  margin:0 0 18px;
+  line-height:1.5;
+}
+
+.g-pill-wrap{display:flex;justify-content:center;margin-bottom:18px}
+.g-pill{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  padding:6px 14px 6px 10px;
+  background:var(--surface-c);
+  border:1px solid var(--line);
+  border-radius:9999px;
+  color:var(--tx);
+  font-size:13px;
+  font-weight:600;
+  max-width:100%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+label{
+  display:block;
+  color:var(--mu);
+  font-size:12.5px;
+  font-weight:700;
+  margin:14px 0 6px;
+}
+.inp-eye{display:flex;gap:8px;align-items:center}
+input{
+  width:100%;
+  flex:1;
+  background:var(--surface-c);
+  color:var(--tx);
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:13px 14px;
+  font:15px 'Plus Jakarta Sans',sans-serif;
+  outline:none;
+  transition:border-color .15s, box-shadow .15s;
+}
+input:focus{
+  border-color:var(--primary);
+  box-shadow:0 0 0 2px var(--primary-container);
+}
+input:disabled{opacity:.65}
+.eye-btn{
+  border:1px solid var(--line);
+  background:var(--surface-c);
+  color:var(--mu);
+  border-radius:14px;
+  width:46px;
+  height:46px;
+  flex:none;
+  display:grid;
+  place-items:center;
+  cursor:pointer;
+}
+.eye-btn:active{transform:scale(.95)}
+
+.str-wrap{margin-top:8px}
+.str-bar{
+  height:5px;
+  border-radius:9999px;
+  background:var(--line);
+  overflow:hidden;
+}
+.str-bar span{
+  display:block;
+  height:100%;
+  width:0%;
+  border-radius:9999px;
+  transition:width .2s ease, background .2s ease;
+}
+.str-txt{
+  font-size:11.5px;
+  font-weight:600;
+  color:var(--mu);
+  margin-top:5px;
+  display:flex;
+  justify-content:space-between;
+}
+
+.msg-box{
+  margin-top:14px;
+  padding:11px 13px;
+  border-radius:14px;
+  font-size:13px;
+  font-weight:600;
+  display:flex;
+  align-items:flex-start;
+  gap:8px;
+  line-height:1.4;
+}
+.msg-box.bad{background:var(--bad-bg);border:1px solid var(--bad);color:var(--bad)}
+.msg-box.ok{background:var(--ok-bg);border:1px solid var(--ok);color:var(--ok)}
+.msg-box.info{background:var(--primary-container);border:1px solid var(--primary);color:var(--primary)}
+
+.btn{
+  width:100%;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  border:0;
+  border-radius:9999px;
+  padding:13px 20px;
+  font:700 14px 'Plus Jakarta Sans',sans-serif;
+  background:var(--primary);
+  color:var(--on-primary);
+  cursor:pointer;
+  transition:transform .15s ease, opacity .15s ease;
+  text-decoration:none;
+  margin-top:18px;
+}
+.btn:active{transform:scale(.98)}
+.btn:disabled{opacity:.65;cursor:not-allowed;transform:none}
+.btn.g{
+  background:var(--surface-c);
+  color:var(--tx);
+  border:1px solid var(--line);
+  margin-top:10px;
+}
+
+.spinner{
+  width:17px;
+  height:17px;
+  border:2.5px solid rgba(128,128,128,0.3);
+  border-top-color:currentColor;
+  border-radius:50%;
+  display:inline-block;
+  animation:spin .7s linear infinite;
+}
+.spinner.lg{
+  width:38px;
+  height:38px;
+  border-width:3.5px;
+  border-color:var(--primary-container);
+  border-top-color:var(--primary);
+  margin:14px auto;
+  display:block;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes shakeInp{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.shake{animation:shakeInp .28s ease}
+
+.icon{
+  font-family:'Material Symbols Rounded',sans-serif;
+  font-style:normal;
+  vertical-align:middle;
+  line-height:1;
+}
+.foot-note{
+  position:relative;
+  z-index:1;
+  margin-top:18px;
+  font-size:12px;
+  color:var(--mu);
+  text-align:center;
+}
+</style>
+</head>
+<body>
+  <div class="top-float">
+    <button class="icon-circle" type="button" title="Cambiar tema" onclick="cycleQuickTheme()" aria-label="Cambiar tema">
+      <i class="icon" style="font-size:19px">contrast</i>
+    </button>
+  </div>
+
+  <div class="g-card" id="card">
+    <div class="g-progress"></div>
+    <div class="brand-head">
+      <img src="logo.png" alt="Passly" onerror="this.style.display='none'">
+      <b>Passly</b>
+    </div>
+    <div id="content">
+      <div class="spinner lg"></div>
+      <h1>Verificando enlace...</h1>
+      <p class="sub">Comprobando la validez de tu solicitud de seguridad.</p>
+    </div>
+  </div>
+
+  <div class="foot-note">Passly • Seguridad de cuenta en passly.cloud-nx.com</div>
+
+<script>
+/* =========================================================
+   CONFIGURACIÓN DE FIREBASE (MISMO PROYECTO QUE index.html)
+   ========================================================= */
+var FIREBASE_CONFIG = {
+  apiKey: "AIzaSyDTzO8PRSn4v0t5CCoLD3sV9qWGb8ULImo",
+  authDomain: "pay-e73e8.firebaseapp.com",
+  projectId: "pay-e73e8",
+  storageBucket: "pay-e73e8.firebasestorage.app",
+  messagingSenderId: "331853869208",
+  appId: "1:331853869208:web:c88f136b13ee533bd3a0ed"
+};
+
+firebase.initializeApp(FIREBASE_CONFIG);
+var auth = firebase.auth();
+auth.languageCode = 'es';
+
+/* =========================================================
+   TEMA SINCRONIZADO CON PASSLY V7 (CLARO / OLED / GRAFITO)
+   ========================================================= */
+function hexToRgb(hex){
+  var h = String(hex || '#2563eb').replace('#','');
+  if (h.length === 3) h = h[0]+h[0]+h[1]+h[1]+h[2]+h[2];
+  var n = parseInt(h, 16);
+  if (isNaN(n)) return { r: 37, g: 99, b: 235 };
+  return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
+}
+
+function applyTheme(theme, accent){
+  var t = theme || localStorage.getItem('passly-theme-v7') || 'light';
+  var a = accent || localStorage.getItem('passly-accent-v7') || '#2563eb';
+  var r = document.documentElement.style;
+  var themes = {
+    light: {
+      bg:'#f4f6fb', sf:'#ffffff', sc:'#f8fafc', ln:'#e2e8f0', tx:'#0f172a', mu:'#64748b', cs:'light',
+      ok:'#059669', okBg:'#dcfce7', bad:'#dc2626', badBg:'#fee2e2', warn:'#d97706', warnBg:'#fef3c7',
+      shMd:'0 14px 38px rgba(15, 23, 42, 0.08)'
+    },
+    oled: {
+      bg:'#000000', sf:'#0a0a0a', sc:'#121212', ln:'#222222', tx:'#f8fafc', mu:'#8e8e93', cs:'dark',
+      ok:'#34d399', okBg:'rgba(52,211,153,0.16)', bad:'#f87171', badBg:'rgba(248,113,113,0.16)', warn:'#fbbf24', warnBg:'rgba(251,191,36,0.16)',
+      shMd:'0 18px 44px rgba(0, 0, 0, 0.8)'
+    },
+    slate: {
+      bg:'#0b1120', sf:'#111827', sc:'#1e293b', ln:'#334155', tx:'#f8fafc', mu:'#94a3b8', cs:'dark',
+      ok:'#34d399', okBg:'rgba(52,211,153,0.16)', bad:'#f87171', badBg:'rgba(248,113,113,0.16)', warn:'#fbbf24', warnBg:'rgba(251,191,36,0.16)',
+      shMd:'0 18px 44px rgba(0, 0, 0, 0.55)'
+    }
+  };
+  var pal = themes[t] || themes.light;
+  r.setProperty('--bg', pal.bg);
+  r.setProperty('--surface', pal.sf);
+  r.setProperty('--surface-c', pal.sc);
+  r.setProperty('--line', pal.ln);
+  r.setProperty('--tx', pal.tx);
+  r.setProperty('--mu', pal.mu);
+  r.setProperty('--ok', pal.ok);
+  r.setProperty('--ok-bg', pal.okBg);
+  r.setProperty('--bad', pal.bad);
+  r.setProperty('--bad-bg', pal.badBg);
+  r.setProperty('--warn', pal.warn);
+  r.setProperty('--warn-bg', pal.warnBg);
+  r.setProperty('--shadow-md', pal.shMd);
+  r.setProperty('color-scheme', pal.cs);
+
+  var rgb = hexToRgb(a);
+  var lum = (0.299 * rgb.r + 0.587 * rgb.g + 0.114 * rgb.b);
+  r.setProperty('--primary', a);
+  r.setProperty('--primary-container', 'rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',' + (t === 'light' ? '0.11' : '0.18') + ')');
+  r.setProperty('--on-primary', lum > 165 ? '#000000' : '#ffffff');
+
+  var meta = document.getElementById('metaTheme');
+  if (meta) meta.setAttribute('content', pal.bg);
+  try { localStorage.setItem('passly-theme-v7', t); } catch(e){}
+}
+
+function cycleQuickTheme(){
+  var cur = localStorage.getItem('passly-theme-v7') || 'light';
+  var next = cur === 'light' ? 'oled' : (cur === 'oled' ? 'slate' : 'light');
+  applyTheme(next, null);
+}
+applyTheme();
+
+/* =========================================================
+   UTILIDADES SEGURAS
+   ========================================================= */
+function esc(s){
+  return String(s || '').replace(/[&<>"']/g, function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
+function $(s){ return document.querySelector(s); }
+function setProgress(on){
+  var bar = $('.g-progress');
+  if (bar) bar.style.display = on ? 'block' : 'none';
+}
+function toggleInp(id, btn){
+  var el = document.getElementById(id);
+  if (!el) return;
+  var show = el.type === 'password';
+  el.type = show ? 'text' : 'password';
+  btn.innerHTML = '<i class="icon" style="font-size:20px">' + (show ? 'visibility_off' : 'visibility') + '</i>';
+}
+function evalStrength(pw){
+  var score = 0;
+  if (pw.length >= 6) score++;
+  if (pw.length >= 10) score++;
+  if (/[A-Z]/.test(pw) && /[a-z]/.test(pw)) score++;
+  if (/[0-9]/.test(pw)) score++;
+  if (/[^A-Za-z0-9]/.test(pw)) score++;
+  var bar = $('#strFill'), lbl = $('#strLabel');
+  if (!bar || !lbl) return;
+  if (!pw) { bar.style.width = '0%'; lbl.textContent = 'Mínimo 6 caracteres'; lbl.style.color = 'var(--mu)'; return; }
+  if (pw.length < 6) { bar.style.width = '20%'; bar.style.background = 'var(--bad)'; lbl.textContent = 'Muy corta'; lbl.style.color = 'var(--bad)'; return; }
+  if (score <= 2) { bar.style.width = '45%'; bar.style.background = 'var(--warn)'; lbl.textContent = 'Seguridad media'; lbl.style.color = 'var(--warn)'; return; }
+  if (score === 3) { bar.style.width = '75%'; bar.style.background = 'var(--primary)'; lbl.textContent = 'Buena contraseña'; lbl.style.color = 'var(--primary)'; return; }
+  bar.style.width = '100%'; bar.style.background = 'var(--ok)'; lbl.textContent = 'Contraseña segura'; lbl.style.color = 'var(--ok)';
+}
+
+/* =========================================================
+   FLUJO DE ACCIONES DE FIREBASE AUTH
+   ========================================================= */
+var params = new URLSearchParams(window.location.search);
+var mode = params.get('mode') || '';
+var oobCode = params.get('oobCode') || '';
+var verifiedEmail = '';
+var submitting = false;
+
+function renderResetForm(email, errMsg){
+  setProgress(submitting);
+  var dis = submitting ? ' disabled' : '';
+  var errHtml = errMsg ? '<div class="msg-box bad"><i class="icon" style="font-size:18px;flex:none">error</i><span>' + esc(errMsg) + '</span></div>' : '';
+
+  $('#content').innerHTML =
+    '<div class="status-ico primary"><i class="icon">lock_reset</i></div>' +
+    '<h1>Crea una nueva contraseña</h1>' +
+    '<p class="sub">Elige una contraseña segura para volver a entrar a tu cuenta de Passly.</p>' +
+    '<div class="g-pill-wrap"><div class="g-pill"><i class="icon" style="font-size:17px;color:var(--ok)">verified</i><span>' + esc(email) + '</span></div></div>' +
+    '<form id="resetForm" onsubmit="submitNewPassword(event)" novalidate>' +
+      '<label for="pw1">Nueva contraseña</label>' +
+      '<div class="inp-eye">' +
+        '<input id="pw1" type="password" autocomplete="new-password" placeholder="Escribe tu nueva contraseña"' + dis + ' oninput="evalStrength(this.value)">' +
+        '<button class="eye-btn" type="button" onclick="toggleInp(\'pw1\', this)" aria-label="Mostrar contraseña"><i class="icon" style="font-size:20px">visibility</i></button>' +
+      '</div>' +
+      '<div class="str-wrap"><div class="str-bar"><span id="strFill"></span></div><div class="str-txt"><span id="strLabel">Mínimo 6 caracteres</span><span></span></div></div>' +
+      '<label for="pw2">Confirmar contraseña</label>' +
+      '<div class="inp-eye">' +
+        '<input id="pw2" type="password" autocomplete="new-password" placeholder="Repite tu nueva contraseña"' + dis + '>' +
+        '<button class="eye-btn" type="button" onclick="toggleInp(\'pw2\', this)" aria-label="Mostrar confirmación"><i class="icon" style="font-size:20px">visibility</i></button>' +
+      '</div>' +
+      errHtml +
+      '<button class="btn" type="submit"' + dis + '>' +
+        (submitting ? '<span class="spinner"></span> Guardando contraseña...' : '<i class="icon" style="font-size:19px">check_circle</i> Guardar nueva contraseña') +
+      '</button>' +
+    '</form>' +
+    '<a class="btn g" href="./"><i class="icon" style="font-size:18px">arrow_back</i> Volver a Passly</a>';
+
+  if (!submitting) {
+    setTimeout(function(){ var el = $('#pw1'); if (el) el.focus(); }, 60);
+  }
+}
+
+async function submitNewPassword(e){
+  e.preventDefault();
+  if (submitting) return;
+  var p1 = ($('#pw1') ? $('#pw1').value : '');
+  var p2 = ($('#pw2') ? $('#pw2').value : '');
+
+  if (p1.length < 6) {
+    renderResetForm(verifiedEmail, 'La contraseña debe tener al menos 6 caracteres.');
+    var el1 = $('#pw1'); if (el1) { el1.value = p1; evalStrength(p1); el1.classList.add('shake'); el1.focus(); }
+    return;
+  }
+  if (p1 !== p2) {
+    renderResetForm(verifiedEmail, 'Las contraseñas no coinciden. Revísalas e intenta de nuevo.');
+    var el1b = $('#pw1'), el2b = $('#pw2');
+    if (el1b) { el1b.value = p1; evalStrength(p1); }
+    if (el2b) { el2b.value = p2; el2b.classList.add('shake'); el2b.focus(); }
+    return;
+  }
+
+  submitting = true;
+  renderResetForm(verifiedEmail, '');
+  var e1 = $('#pw1'), e2 = $('#pw2');
+  if (e1) e1.value = p1;
+  if (e2) e2.value = p2;
+
+  try {
+    await auth.confirmPasswordReset(oobCode, p1);
+    submitting = false;
+    renderSuccess(
+      'Contraseña actualizada',
+      'Tu nueva contraseña para ' + verifiedEmail + ' ya está lista. Puedes iniciar sesión en Passly de inmediato.'
+    );
+  } catch (err) {
+    submitting = false;
+    var msg = 'No se pudo actualizar tu contraseña. Intenta solicitar un enlace nuevo.';
+    if (err && err.code === 'auth/expired-action-code') msg = 'Este enlace ya expiró. Solicita uno nuevo abajo.';
+    else if (err && err.code === 'auth/invalid-action-code') msg = 'Este enlace ya fue utilizado o no es válido.';
+    else if (err && err.code === 'auth/weak-password') msg = 'La contraseña es muy débil. Usa al menos 6 caracteres.';
+    renderResetForm(verifiedEmail, msg);
+  }
+}
+
+function renderSuccess(title, subtitle){
+  setProgress(false);
+  $('#content').innerHTML =
+    '<div class="status-ico ok"><i class="icon">verified_user</i></div>' +
+    '<h1>' + esc(title) + '</h1>' +
+    '<p class="sub">' + esc(subtitle) + '</p>' +
+    '<a class="btn" href="./"><i class="icon" style="font-size:19px">login</i> Iniciar sesión en Passly</a>';
+}
+
+function renderInvalidOrRequestNew(title, subtitle, feedbackHtml){
+  setProgress(false);
+  $('#content').innerHTML =
+    '<div class="status-ico bad"><i class="icon">link_off</i></div>' +
+    '<h1>' + esc(title) + '</h1>' +
+    '<p class="sub">' + esc(subtitle) + '</p>' +
+    '<form onsubmit="requestNewLink(event)" novalidate>' +
+      '<label for="reqEmail">¿Necesitas un enlace nuevo?</label>' +
+      '<input id="reqEmail" type="email" autocomplete="email" placeholder="Escribe tu correo registrado">' +
+      (feedbackHtml || '') +
+      '<button class="btn" id="btnReqNew" type="submit"><i class="icon" style="font-size:18px">mail</i> Enviar nuevo enlace</button>' +
+    '</form>' +
+    '<a class="btn g" href="./"><i class="icon" style="font-size:18px">arrow_back</i> Volver a Passly</a>';
+}
+
+async function requestNewLink(e){
+  e.preventDefault();
+  var inp = $('#reqEmail');
+  var email = (inp ? inp.value : '').trim().toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
+    renderInvalidOrRequestNew(
+      'Solicitar nuevo enlace',
+      'Escribe el correo con el que accedes a Passly para enviarte otro enlace de recuperación.',
+      '<div class="msg-box bad"><i class="icon" style="font-size:18px;flex:none">error</i><span>Ingresa un correo electrónico válido.</span></div>'
+    );
+    var r = $('#reqEmail'); if (r) { r.value = email; r.classList.add('shake'); r.focus(); }
+    return;
+  }
+
+  var btn = $('#btnReqNew');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Enviando correo...'; }
+  setProgress(true);
+  try {
+    await auth.sendPasswordResetEmail(email);
+    renderInvalidOrRequestNew(
+      'Correo enviado',
+      'Si existe una cuenta registrada con ese correo, recibirás el enlace en tu bandeja de entrada en unos segundos.',
+      '<div class="msg-box ok"><i class="icon" style="font-size:18px;flex:none">check_circle</i><span>Enlace enviado a <b>' + esc(email) + '</b>. Revisa también tu carpeta de spam.</span></div>'
+    );
+  } catch (err) {
+    var msg = 'No pudimos enviar el correo en este momento. Intenta de nuevo en unos minutos.';
+    if (err && err.code === 'auth/too-many-requests') msg = 'Demasiados envíos seguidos. Espera un par de minutos.';
+    renderInvalidOrRequestNew(
+      'No se pudo enviar',
+      'Verifica el correo e intenta nuevamente.',
+      '<div class="msg-box bad"><i class="icon" style="font-size:18px;flex:none">error</i><span>' + esc(msg) + '</span></div>'
+    );
+    var r2 = $('#reqEmail'); if (r2) r2.value = email;
+  }
+}
+
+/* =========================================================
+   INICIALIZACIÓN AL ABRIR LA PÁGINA
+   ========================================================= */
+async function init(){
+  if (!oobCode) {
+    renderInvalidOrRequestNew(
+      'Restablecer contraseña',
+      'Para cambiar tu contraseña, abre el enlace que te enviamos por correo o solicita uno nuevo aquí.'
+    );
+    return;
+  }
+
+  if (mode === 'resetPassword' || !mode) {
+    try {
+      verifiedEmail = await auth.verifyPasswordResetCode(oobCode);
+      renderResetForm(verifiedEmail, '');
+    } catch (err) {
+      var reason = 'Este enlace ya expiró o ya fue utilizado anteriormente.';
+      if (err && err.code === 'auth/invalid-action-code') reason = 'Este enlace de restablecimiento no es válido o ya se usó.';
+      renderInvalidOrRequestNew('Enlace no disponible', reason);
+    }
+  } else if (mode === 'verifyEmail') {
+    try {
+      await auth.applyActionCode(oobCode);
+      renderSuccess('Correo verificado', 'Tu dirección de correo fue confirmada correctamente.');
+    } catch (err) {
+      renderInvalidOrRequestNew('Enlace de verificación expirado', 'Este enlace ya no es válido o ya fue utilizado.');
+    }
+  } else if (mode === 'recoverEmail') {
+    try {
+      await auth.applyActionCode(oobCode);
+      renderSuccess('Correo restaurado', 'Se restableció tu correo anterior en Passly. Te recomendamos cambiar tu contraseña.');
+    } catch (err) {
+      renderInvalidOrRequestNew('Enlace expirado', 'No se pudo completar la recuperación del correo.');
+    }
+  } else {
+    renderInvalidOrRequestNew('Acción no reconocida', 'El enlace abierto no corresponde a una acción válida de Passly.');
+  }
+}
+
+init();
+</script>
+</body>
+</html>
